@@ -1,0 +1,11 @@
+name = Datagov Admin Views
+description = A collection of admin views that are helpful for managing the site.
+core = 7.x
+package = Datagov
+version = 7.x-1.2
+project = datagov_admin_views
+dependencies[] = ctools
+dependencies[] = views
+features[ctools][] = views:views_default:3.0
+features[features_api][] = api:1
+features[views_view][] = admin_views

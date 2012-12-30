@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Admin Views feature.
+ */
+
+include_once 'datagov_admin_views.features.inc';

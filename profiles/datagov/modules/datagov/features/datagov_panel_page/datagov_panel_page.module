@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Panel Page feature.
+ */
+
+include_once 'datagov_panel_page.features.inc';

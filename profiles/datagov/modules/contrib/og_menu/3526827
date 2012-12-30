@@ -1,0 +1,72 @@
+From 35268277ca42011952b2472e7c9a6f7595dc4ff3 Mon Sep 17 00:00:00 2001
+From: rv0 <rv0@655596.no-reply.drupal.org>
+Date: Tue, 31 Jul 2012 18:14:48 +0200
+Subject: [PATCH] Issue #1330550 by rv0: make sure menu isnt lost on programmatic node_save.
+
+---
+ og_menu.module |   46 +++++++++++++++++++++++++---------------------
+ 1 files changed, 25 insertions(+), 21 deletions(-)
+
+diff --git a/og_menu.module b/og_menu.module
+index 9d0dd24..2424195 100644
+--- a/og_menu.module
++++ b/og_menu.module
+@@ -605,30 +605,34 @@ function og_menu_node_insert($node) {
+ function og_menu_node_update($node) {
+   if (og_is_group_type('node', $node->type)) {
+     $og = og_get_group('node', $node->nid, FALSE, array(OG_STATE_ACTIVE, OG_STATE_PENDING));
+-    if ($node->og_menu) {
+-      $menu = og_menu_get_group_menus(array($og->gid));
+-      if (empty($menu)) {
+-        menu_save(array(
+-          'menu_name' => 'menu-og-' . $og->gid,
+-          'title' => $node->title,
+-          'description' => t('OG Menu for') . ' ' . check_plain($node->title),
+-        ));
+-        og_menu_update_menu('menu-og-' . $og->gid, $og->gid);
++    if (isset($node->og_menu)) {
++      if ($node->og_menu) {
++        $menu = og_menu_get_group_menus(array($og->gid));
++        if (empty($menu)) {
++          menu_save(array(
++            'menu_name' => 'menu-og-' . $og->gid,
++            'title' => $node->title,
++            'description' => t('OG Menu for') . ' ' . check_plain($node->title),
++          ));
++          og_menu_update_menu('menu-og-' . $og->gid, $og->gid);
++        }
+       }
+-    }
+-    else {
+-      // We can't assume that the menu name is 'menu-og-[gid]'
+-      // we need to look up menus associated with this group
+-      $result = db_query('SELECT menu_name FROM {og_menu} WHERE gid = :gid', array(':gid' => $og->gid))->fetchCol();
+-      foreach ($result as $menu_name) {
+-        menu_delete(array(
+-          'menu_name' => $menu_name,
+-          'title' => $node->title,
+-          'description' => t('OG Menu for') . ' ' . check_plain($node->title),
+-        ));
+-        og_menu_update_menu($menu_name);
++      else {
++        // Delete the associated menus.
++        // We can't assume that the menu name is 'menu-og-[gid]'
++        // we need to look up menus associated with this group
++        $result = db_query('SELECT menu_name FROM {og_menu} WHERE gid = :gid', array(':gid' => $og->gid))->fetchCol();
++        foreach ($result as $menu_name) {
++          menu_delete(array(
++            'menu_name' => $menu_name,
++            'title' => $node->title,
++            'description' => t('OG Menu for') . ' ' . check_plain($node->title),
++          ));
++          og_menu_update_menu($menu_name);
++        }
+       }
+     }
++    // else = programmatic node save, do nothing.
+   }
+ }
+ 
+-- 
+1.7.4.1
+

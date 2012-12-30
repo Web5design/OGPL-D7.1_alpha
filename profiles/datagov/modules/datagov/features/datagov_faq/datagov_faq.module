@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov FAQ feature.
+ */
+
+include_once 'datagov_faq.features.inc';

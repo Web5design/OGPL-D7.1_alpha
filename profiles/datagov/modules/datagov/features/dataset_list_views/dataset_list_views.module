@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Dataset List Views feature.
+ */
+
+include_once 'dataset_list_views.features.inc';

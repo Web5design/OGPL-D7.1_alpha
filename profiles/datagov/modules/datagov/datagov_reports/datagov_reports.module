@@ -1,0 +1,166 @@
+<?php
+
+/*
+ *  Module to demo Google Analytics Reports, Google Charts
+ *   and WebTrends API.
+ */
+
+// use hook menu for displaying the charts and response data
+function datagov_reports_menu() {
+  $items['report_test'] = array(
+    'title' => t('Google Analytics - Pie Chart'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'datagov_reports_report_test',
+    'access callback' => TRUE,
+  );
+  $items['report_test2'] = array(
+    'title' => t('Google Analytics - Line Chart'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'datagov_reports_report_test2',
+    'access callback' => TRUE,
+  );
+  $items['report_test3'] = array(
+    'title' => t('WebTrends - Line Chart'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'datagov_reports_report_test3',
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+// simple pie chart of communities URLs and percentage of page views
+function datagov_reports_report_test() {
+  $params = array(
+    'metrics' => array('ga:pageviews'),
+    'dimensions' => array('ga:pageTitle', 'ga:hostname', 'ga:pagePath'),
+    'sort_metric' => array('-ga:pageviews'),
+    'filters' => array('ga:pagePath=~^/communities'), // starts with /communities
+    'start_date' => strtotime('-31 days'),
+    'end_date' => strtotime('-1 day'),
+    'sort' => '-ga:pageviews',
+    'max_results' => 8,
+  );
+  $feed = google_analytics_api_report_data($params);
+  if ($feed->error) {
+    echo "ERROR: google_analytics_api_report_data</ br>";
+    echo print_r($feed, true);
+    exit();
+  }
+  // sum of page views returned in results
+  foreach ($feed->results as $row) {
+    $total += $row['pageviews'];
+  }
+  // calculate percentage of each page view
+  foreach ($feed->results as $row) {
+    $paths[] = $row['pagePath'].'('.number_format(($row['pageviews']/$total)*100,2).'%)';
+    $views[] = $row['pageviews'] / $total;
+  }
+  $chart = array(
+    '#chart_id' => 'mychartid',
+    '#type' => CHART_TYPE_PIE,
+    '#size' => chart_size(700, 400),
+    '#data' => $views,
+    '#labels' => $paths,
+    '#data_colors' => array('800000','00C000'), // fade from crimson to lime green
+  );
+  return theme('chart', array('chart' => $chart));
+}
+
+// simple line chart of top URLs and page views
+function datagov_reports_report_test2() {
+  $paths = array();
+  $views = array();
+  $params = array(
+    'metrics' => array('ga:pageviews'),
+    'dimensions' => array('ga:pageTitle', 'ga:hostname', 'ga:pagePath'),
+    'sort_metric' => array('-ga:pageviews'),
+    'start_date' => strtotime('-31 days'),
+    'end_date' => strtotime('-1 day'),
+    'sort' => '-ga:pageviews',
+    'max_results' => 10,
+  );
+  $feed = google_analytics_api_report_data($params);
+  if ($feed->error) {
+    return FALSE;
+  }
+  foreach ($feed->results as $row) {
+    $paths[] = $row['pagePath'];
+    $views[] = $row['pageviews'];
+  }
+  $chart = array(
+    '#chart_id' => 'mychartid',
+    '#data' => $views,
+    '#type' => CHART_TYPE_LINE . ':nda',
+    '#size' => chart_size(800, 300),
+    '#adjust_resolution' => TRUE,
+    '#data_colors' => array('AAAAAA'),
+    '#chart_fill' => chart_fill('bg', '00000000'),
+    '#shape_markers' => array(chart_shape_marker(0, 0, 'B', 0, $color = 'EEEEEE')),
+    '#line_styles' => array(chart_line_style(2, 10, 0)),
+  );
+  /* Generally speaking, your metric will will be your Y axis... */
+  $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, max($views));
+  /* ... and your dimensions will be your X axis. */
+  foreach ($paths as $path) {
+    $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label($path);
+  }
+
+  return theme('chart', array('chart' => $chart));
+}
+
+// simple example of using WebTrends API
+function datagov_reports_report_test3() {
+
+  $username = 'usa.gov\Kishore Vuppala';  // format: account\username
+  $password = 'Temp01234!!';
+  $url = 'https://'.$username.':'.$password.'@ws.webtrends.com/v3/Reporting';
+  $uri = '/profiles/41461/reports/18d039ae036/'; // "Page" report
+  $uri .= '?start_period=2012m09d01&end_period=2012m09d30'; // start/end dates
+  $uri .= '&range=10'; // rows 1-10
+  $uri .= '&format=json'; // JSON response format
+
+  $response = drupal_http_request($url.$uri, array(), 'GET', '');
+
+  if ($response->code != '200') {
+      // data is undefined if the connection failed.
+      if (!isset($response->data)) {
+        $response->data = '';
+      }
+      $error_msg = 'Failed - Code: !code - Error: !message - Message: !details';
+      $error_vars = array('!code' => $response->code, '!message' => $response->error, '!details' => strip_tags($response->data));
+      $output .= t($error_msg, $error_vars);
+      //watchdog('WebTrends', $error_msg, $error_vars, WATCHDOG_ERROR);
+  } else {
+
+    $response = json_decode($response->data);
+    //print_r((array)$response->data[0]->SubRows[0]);
+
+    $views = array();
+    $paths = array();
+    foreach((array)$response->data[0]->SubRows[0] as $key => $val) {
+      //$titles[] = $val->attributes->Title;
+      $paths[] = $key;
+      $views[] = $val->measures->Views;
+    }
+  }
+
+  $chart = array(
+    '#chart_id' => 'mychartid',
+    '#data' => $views,
+    '#type' => CHART_TYPE_LINE . ':nda',
+    '#size' => chart_size(800, 300),
+    '#adjust_resolution' => TRUE,
+    '#data_colors' => array('AAAAAA'),
+    '#chart_fill' => chart_fill('bg', '00000000'),
+    '#shape_markers' => array(chart_shape_marker(0, 0, 'B', 0, $color = 'EEEEEE')),
+    '#line_styles' => array(chart_line_style(2, 10, 0)),
+  );
+  /* Generally speaking, your metric will will be your Y axis... */
+  $chart['#mixed_axis_labels'][CHART_AXIS_Y_LEFT][0][] = chart_mixed_axis_range_label(0, max($views));
+  /* ... and your dimensions will be your X axis. */
+  foreach ($paths as $path) {
+    $chart['#mixed_axis_labels'][CHART_AXIS_X_BOTTOM][1][] = chart_mixed_axis_label($path);
+  }
+
+  return theme('chart', array('chart' => $chart));
+}

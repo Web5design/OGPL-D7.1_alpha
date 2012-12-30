@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Challenge feature.
+ */
+
+include_once 'datagov_challenge.features.inc';

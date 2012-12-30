@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Boxes feature.
+ */
+
+include_once 'datagov_boxes.features.inc';

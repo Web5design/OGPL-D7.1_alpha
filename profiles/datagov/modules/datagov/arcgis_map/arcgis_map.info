@@ -1,0 +1,3 @@
+name = ArcGIS Map
+description = Map from ArcGIS server.
+core = 7.x

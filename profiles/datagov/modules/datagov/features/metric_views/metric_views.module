@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Metric views feature.
+ */
+
+include_once 'metric_views.features.inc';

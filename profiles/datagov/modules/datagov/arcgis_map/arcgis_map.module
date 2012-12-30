@@ -1,0 +1,200 @@
+<?php
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function arcgis_map_form_alter(&$form, $form_state, $form_id) {
+  if($form_id != 'arcgis_map_node_form') {
+    return;
+  }
+
+  $form['title']['#required'] = FALSE;
+  $form['title']['#description'] = t("Leave it empty to use map title from server.");
+
+  $form['arcgis_map_server']['und'][0]['value']['#default_value'] = variable_get('arcgis_map_server', 'http://www.geoplatform.gov');
+
+  // Use our own validation function.
+  $form['#validate'][] = 'arcgis_map_validate';
+
+  // Use our own submit function.
+  $form['#submit'][]  = 'arcgis_map_submit';
+}
+
+/**
+ * Define our own valdiate function.
+ */
+function arcgis_map_validate($form, &$form_state) {
+  // TODO not doing validate uite right yet. not sure why only form_state 2nd time works
+
+  if (empty($form_state['values'])) {
+    return;
+  }
+
+  $server = check_url($form_state['values']['arcgis_map_server']['und'][0]['value']);
+  // TODO this masks out some error input.
+  $map_id = preg_replace('/[^A-Fa-f0-9]+/', '', $form_state['values']['arcgis_map_id']['und'][0]['value']);
+
+  if (empty($server) || empty($map_id)) {
+    // TODO let default validate catch it.
+    return;
+  }
+
+  $request = get_arcgis_map_info($server, $map_id);
+  if (isset($request->error)) {
+    form_set_error('', t("Error fetching map. Please check accuracy of the server address and map ID." . "<br>" . $request->error));
+  }
+  else {
+    // TODO also insert into cache
+    $form_state['values']['map'] = $request->data;
+  }
+}
+
+function get_arcgis_map_info($server, $map_id) {
+  // TODO cache
+  $url =  $server. "/sharing/content/items/$map_id/info/iteminfo.xml";
+  $result = drupal_http_request($url);
+  return $result;
+}
+
+/**
+ * Define our own submit function.
+ */
+function arcgis_map_submit($form,&$form_state) {
+
+  $map = $form_state['values']['map'];
+  $map = new SimpleXMLElement($map);
+
+  // Give it a title.
+  if (trim($form_state['values']['title'] == "")) {
+    $form_state['values']['title'] = strip_tags($map->title->asXML());
+  }
+  
+}
+
+/**
+ * Implements hook_node_info().
+ */
+function arcgis_map_node_info() {
+  // Define the structure of a node type
+  return array(
+    'arcgis_map' => array(
+      'name' => t('ArcGIS Map'),
+      'base' => 'arcgis_map',
+      'description' => t('This is a node type to use maps on ArcGIS type of servers.'),
+      'help' => '',
+      'has_title' => TRUE,
+      'title_label' => t('Map Title'),
+      'custom' => FALSE,
+      'modified' => TRUE,
+      'locked' => TRUE,
+      'disabled' => FALSE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_form().
+ */
+function arcgis_map_form($node, &$form_state) {
+  return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_insert().
+ */
+function arcgis_map_insert($node) {
+  // Placeholder
+}
+
+/**
+ * Implements hook_load().
+ */
+function arcgis_map_load($nodes) {
+  // Placeholder
+}
+
+/**
+ * Implements hook_view().
+ */
+function arcgis_map_view($node, $view_mode) {
+  // Placeholder
+  return $node;
+}
+
+/**
+ * Implements hook_update().
+ */
+function arcgis_map_update($node) {
+  // Placeholder
+}
+
+/**
+ * Implements hook_delete().
+ */
+function arcgis_map_delete() {
+  // Placeholder
+}
+
+
+/**
+ * The following functions are to convince drupal to use our node tpl file.
+ */
+function arcgis_map_theme_registry_alter(&$theme_registry) {
+  $mod_path = drupal_get_path('module', 'arcgis_map');
+
+  $theme_registry_copy = $theme_registry;       // munge on a copy
+  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $mod_path);
+  $theme_registry += array_diff_key($theme_registry_copy, $theme_registry);
+
+  $hooks = array('node');
+  foreach ($hooks as $h) {
+    if (!isset($theme_registry[$h]['theme paths'])) { 
+      $theme_registry[$h]['theme paths'] = array(); 
+    } 
+    _arcgis_map_insert_after_first_element($theme_registry[$h]['theme paths'], $mod_path);
+  }
+}
+
+function _arcgis_map_insert_after_first_element(&$a, $element) {
+  if(is_array($a)) { 
+    $first_element = array_shift($a); 
+    if ($first_element) { 
+      array_unshift($a, $first_element, $element); 
+    } 
+    else { 
+      array_unshift($a, $element); 
+    }
+  }
+}
+
+function arcgis_map_preprocess_node(&$vars) {
+  if ($vars['type'] != 'arcgis_map') {
+    return;
+  }
+//  dsm($vars['view_mode']);
+
+  if ($vars['view_mode'] == 'full') {
+
+    // This is our tpl file
+    $vars['theme_hook_suggestions'][] = 'node__arcgis_map';
+
+    // Pass in map info to display the full node.
+    $server = $vars['node']->arcgis_map_server['und'][0]['value'];
+    $map_id = $vars['node']->arcgis_map_id['und'][0]['value'];
+
+    $request = get_arcgis_map_info($server, $map_id);
+    if (isset($request->error)) {
+      drupal_set_message(t('An error occurred and processing did not complete.)'. '<br>' . $request->error), 'error');
+      return;
+    }
+
+    // Parse the xml. TODO put into a function.
+    $map = new SimpleXMLElement($request->data);
+
+    // Pass info into theme.
+    $vars['map_info']['title'] = strip_tags($map->title->asXML());
+//  $vars['map_info']['snippet'] = strip_tags($map->snippet->asXML());
+    $vars['map_info']['img_href'] = $server . '/home/item.html?id=' . $map_id;
+    $vars['map_info']['img_src'] = $server . '/sharing/content/items/' . $map_id . '/info/' . strip_tags($map->thumbnail->asXML());
+  }
+}

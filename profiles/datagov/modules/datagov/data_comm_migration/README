@@ -1,0 +1,20 @@
+
+The Data.gov Communities Migration module provides tools specific to the OGPL Drupal 7 implementation. This module provides custom tools for migrating Drupal 6 content into Drupal 7.
+
+Installation & Configurations
+------------
+Before installing the module make sure that the Drupal 6 legacy database is on the same mysql instance, and you should have the path to the Drupal 6 files directory. These information will be used as the source for the migration.
+
+Enable the module and its dependencies. 
+Then browse to admin/config/development/data_comm_migration. Here we specify the migration source and destination. The source database must be accessible by the current website database user and must reside on the same db instance.
+
+The Drupal 6 files directory must be on the same server to successfully migrate files.
+Finally, browse to admin/reports/status and make sure that the Drupal 7 files directory is writable.
+
+Usage
+-----
+To get started with the actual migration process browse to admin/content/migrate. Here you will see the Migrate modules dashboard. 
+
+Known issues
+------------
+The module assumes that the migration source database will be in the same mysql instance. The files directory must also be on the same server.

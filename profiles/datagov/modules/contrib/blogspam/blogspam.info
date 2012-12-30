@@ -1,0 +1,13 @@
+name = Blogspam
+description = Blogspam from http://blogspam.net/
+core = 7.x
+configure = admin/config/content/blogspam
+files[]=blogspam.module
+files[]=blogspam.install
+
+; Information added by drupal.org packaging script on 2011-03-09
+version = "7.x-1.0"
+core = "7.x"
+project = "blogspam"
+datestamp = "1299709866"
+

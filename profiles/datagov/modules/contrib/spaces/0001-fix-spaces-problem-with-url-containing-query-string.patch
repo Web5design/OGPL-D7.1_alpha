@@ -1,0 +1,25 @@
+From 894e01a07ce8ac4cf04759aba285bcbaa9dede5f Mon Sep 17 00:00:00 2001
+From: fxia <fxia@2068458.no-reply.drupal.org>
+Date: Mon, 17 Dec 2012 14:58:05 -0500
+Subject: [PATCH] fix spaces problem with url containing query string.
+
+---
+ .../contrib/spaces/plugins/space_type_purl.inc     |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/sites/all/modules/contrib/spaces/plugins/space_type_purl.inc b/sites/all/modules/contrib/spaces/plugins/space_type_purl.inc
+index 7061e06..2707152 100644
+--- a/sites/all/modules/contrib/spaces/plugins/space_type_purl.inc
++++ b/sites/all/modules/contrib/spaces/plugins/space_type_purl.inc
+@@ -64,7 +64,7 @@ class space_type_purl extends space_type {
+   function deactivate() {
+     $this->purge_request_destination();
+     $purl_params = array(
+-      'query' => drupal_http_build_query(drupal_get_query_parameters($_GET, array('q'))),
++      'query' => drupal_get_query_parameters($_GET, array('q')),
+       'purl' => array(
+         'remove' => array("spaces_{$this->type}")
+       )
+-- 
+1.7.5.4
+

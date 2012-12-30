@@ -1,0 +1,14 @@
+name = USASearch
+description = "Provides customized search using the General Services Administration's USASearch program"
+core = 7.x
+configure = admin/settings/usasearch
+package = USASearch
+
+dependencies[] = search
+
+; Information added by drupal.org packaging script on 2012-05-24
+version = "7.x-2.x-dev"
+core = "7.x"
+project = "USASearch"
+datestamp = "1337820694"
+

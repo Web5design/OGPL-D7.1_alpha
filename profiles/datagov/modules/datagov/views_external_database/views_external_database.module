@@ -1,0 +1,111 @@
+<?php
+/**
+ * @file
+ * This file implements Drupal hooks and defines a views handler for accessing data from external databases.
+ * 
+ * 
+ */
+
+/**
+ * Advertise the current views api version
+ */
+function views_external_database_views_api() {
+    return array(
+        'api' => 3,
+        'path' => drupal_get_path('module', 'views_external_database'),
+    );
+}
+
+/**
+ * Implements hook_views_post_execute().
+ */
+function views_external_database_views_post_execute(&$views) {
+  if (empty($views->result)) {
+    return;
+  }
+
+  // Store views results for later use.
+  switch ($views->name) {
+    case 'metrics_daily_visitor':
+      // Store the Month Year name.
+      $month_name = date('F Y', strtotime($views->result[0]->v_stats_daily_visitor_data_point_date));
+      $views->storage['month_name'] = $month_name;
+
+      // Store raw results for customized header in views UI 
+      $results = array();
+      foreach ($views->result as $result) {
+        $results[] = $result->v_stats_daily_visitor_data_point_value;
+      }
+      $views->storage['raw_results'] = $results;
+
+      // Output the default views header
+      $output = array();
+      $output['title'] = "Statistics for the month of <span>" . $month_name . "</span>";
+      $output['items'] = array(
+        'Min Daily Visitors: <span>' . number_format(min($results)) . '</span>', 
+        'Max Daily Visitors: <span>' . number_format(max($results)) . '</span>',
+        'Daily Average: <span>' . number_format(array_sum($results) / count($results)) . '</span>',
+        'Monthly Total: <span>' . number_format(array_sum($results)) . '</span>',
+      );
+      $output = theme('item_list', $output);
+      $views->storage['output'] = $output;
+      break;
+
+    case 'metrics_monthly_visitor':
+      // Store raw results for customized header in views UI 
+      $results = array();
+      foreach ($views->result as $result) {
+        $results[] = $result->v_stats_metrics_data_point_value;
+      }
+      $views->storage['raw_results'] = $results;
+      $views->storage['output'] = 'Total Number of Visitors in the Last 12 Months: <span>' . number_format(array_sum($results)) . '</span>';
+      break;
+
+    case 'metrics_download_by_category':
+      // Store the Month Year name.
+      $month_name = date('F Y', strtotime($views->result[0]->v_stats_download_by_category_data_point_date));
+      $views->storage['month_name'] = $month_name;
+
+      // Store raw results for customized header in views UI 
+      $results = array();
+      foreach ($views->result as $result) {
+        $results[] = $result->v_stats_download_by_category_data_point_value;
+      }
+      $views->storage['raw_results'] = $results;
+      $views->storage['output'] = "Grand Total Downloads in $month_name: <span>" . number_format(array_sum($results)) . '</span>';
+      break;
+    
+    case 'metrics_monthly_download':
+      // Store raw results for customized header in views UI 
+      $results = array();
+      foreach ($views->result as $result) {
+        $results[] = $result->v_stats_metrics_data_point_value;
+      }
+      $views->storage['raw_results'] = $results;
+      $views->storage['output'] = 'Total Number of Downloads in the Last 12 Months: <span>' . number_format(array_sum($results)) . '</span>';
+      break;
+    
+    case 'metrics_monthly_page_views':
+      // Store raw results for customized header in views UI 
+      $results = array();
+      foreach ($views->result as $result) {
+        $results[] = $result->v_stats_metrics_data_point_value;
+      }
+      $views->storage['raw_results'] = $results;
+      $views->storage['output'] = 'Total number of page views since May 2011: <span>' . number_format(array_sum($results)) . '</span>';
+      break;
+
+    case 'metrics_top_country':
+      // Store the Month Year name.
+      $month_name = date('F Y', strtotime($views->result[0]->v_stats_top_country_data_point_date));
+      $views->storage['month_name'] = $month_name;
+      break;
+
+    case 'metrics_top_state':
+      // Store the Month Year name.
+      $month_name = date('F Y', strtotime($views->result[0]->v_stats_top_state_data_point_date));
+      $views->storage['month_name'] = $month_name;
+      break;     
+  }
+
+}

@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Developer Apps Gallery feature.
+ */
+
+include_once 'datagov_developer_apps_gallery.features.inc';

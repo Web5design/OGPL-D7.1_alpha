@@ -1,0 +1,18 @@
+<?php
+function fusionmap_display_node_view ($node, $view_mode, $langcode) {
+  switch ($node->type) {
+    case 'fusion_map':
+      drupal_add_js(drupal_get_path('module', 'fusionmap_display') . '/js/FusionMaps.js', 'file');
+
+      $xmlFile = file_create_url($node->field_xml_source['und'][0]['uri']);
+      $swfFile = file_create_url($node->field_flash_file['und'][0]['uri']);
+
+      $js = 'jQuery(document).ready(function(){';
+      $js .= 'map = new FusionMaps("'.$swfFile.'","fusionmap",750,460, 0);';
+      $js .= 'map.setTransparent();';
+      $js .= 'map.setDataURL("'.$xmlFile.'");';
+      $js .= 'map.render("fusionmap");';
+      $js .= '});';
+      drupal_add_js($js, 'inline');
+  }
+}

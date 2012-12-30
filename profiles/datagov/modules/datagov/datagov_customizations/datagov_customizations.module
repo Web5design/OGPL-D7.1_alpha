@@ -1,0 +1,42 @@
+<?php
+
+/*
+ *  Module to add Data.gov specific customizations.
+ */
+
+/**
+ * Implementation of hook_views_api().
+ */
+function datagov_customizations_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'datagov_customizations') . '/views',
+  );
+}
+
+/**
+ * Implementation of hook_og_role_grant().
+ */
+function datagov_customizations_og_role_grant($gid, $uid, $rid) {
+
+    /**
+	CORE ROLE MAP TABLE FROM OG D7 TO Core D7
+	
+	D7-OG-rid	D7-OG-role-name		D7-CORE-rid	D7-CORE-role-name
+	------		-------------		-------		--------------
+	3   		community admin		30 		Community Administrator
+	4  		community moderator	31		Community Moderator 
+	5   		community contributor   32		Community Contributor 
+
+    */
+
+    $coreRoleMap = array (
+      '3' => 30,
+      '4' => 31,
+      '5' => 32,
+    );
+
+    if(isset($coreRoleMap[$rid])) {
+      user_multiple_role_edit(array($uid), 'add_role', $coreRoleMap[$rid]);
+    }
+}

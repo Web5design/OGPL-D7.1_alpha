@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Slide Gallery feature.
+ */
+
+include_once 'datagov_slide_gallery.features.inc';

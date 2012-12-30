@@ -1,0 +1,5 @@
+name = "Data.gov Get Metadata"
+description = "Retrives metadata from the data.gov catalog for raw data and apps, and geo.data.gov catalog for getodata"
+core = "7.x"
+package = "Data.gov Legacy Functionalities Support"
+configure = admin/config/datagov_get_metadata

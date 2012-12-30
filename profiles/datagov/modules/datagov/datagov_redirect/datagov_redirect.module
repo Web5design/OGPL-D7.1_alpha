@@ -1,0 +1,395 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function datagov_redirect_menu() {
+
+  // /communities/business
+  $items['communities/%'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__community',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+  );
+
+
+  // communities/node/244/data_tools
+  // communities/node/42391/data
+  $items['communities/node/%/data_tools'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__data_tools',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+  $items['communities/node/%/data'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__data_tools',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/38/data_tools/29911
+  $items['communities/node/%/data_tools/%'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__data_tools',
+    'page arguments' => array(2, 4),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/48/blogs
+  $items['communities/node/%/blogs'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__blogs',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+  // communities/node/48/blogs/77401
+  $items['communities/node/%/blogs/%'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__blogs',
+    'page arguments' => array(2, 4),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/244/forums
+  $items['communities/node/%/forums'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__forums',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/244/forums/4528
+  $items['communities/node/%/forums/%'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__forums_tag',
+    'page arguments' => array(2,4),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/244/forums/topic/6327
+  $items['communities/node/%/forums/topic/%'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__forums',
+    'page arguments' => array(2,5),
+    'access callback' => TRUE,
+  );
+  
+
+  // communities/node/48/tools-apps
+  $items['communities/node/%/tools-apps'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__tools_apps',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/244/challenges
+  $items['communities/node/%/challenges'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__challenges',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/42391/policies
+  $items['communities/node/%/policies'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__policies',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  // communities/node/48/resources
+  $items['communities/node/%/resources'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => '_datagov_redirect__resources',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+function _datagov_redirect__community($group) {
+  // Hopefull old and new group name are the same.
+  drupal_goto("community/$group");
+  return;
+}
+
+function _datagov_redirect__data_tools($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("community/$purl/datasets");
+  return;
+}
+
+function _datagov_redirect__blogs($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("community/$purl/blogs");
+  return;
+}
+
+function _datagov_redirect__forums($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("community/$purl/forums");
+  return;
+}
+
+function _datagov_redirect__forums_tag($group_id, $tag_id) {
+  if (!is_numeric($tag_id)) {
+    return;
+  }
+
+  $new_tag_id = datagov_redirect_find_new_tag($tag_id);
+  if (!$new_tag_id) {
+    drupal_not_found();
+    return;
+  }
+
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group
+  $purl = $new_group->purl;
+
+  $gid = og_get_group('node', $new_group->nid)->gid;
+
+  drupal_goto("$purl/page/forum-topic", array(
+    'query' => array(
+        'tid' => $new_tag_id,
+        'group' =>$gid,
+    )));
+  return;
+}
+
+function _datagov_redirect__tools_apps($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("page/$purl-apps");
+  return;
+}
+
+function _datagov_redirect__challenges($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("page/$purl-challenges");
+  return;
+}
+
+function _datagov_redirect__policies($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("page/$purl-policies");
+  return;
+}
+
+function _datagov_redirect__resources($group_id, $node_id) {
+  if (is_numeric($node_id)) {
+    $new_node = datagov_redirect_find_new_node($node_id);
+    if (!$new_node) {
+      drupal_not_found();
+      return;
+    }
+    drupal_goto("node/$new_node->nid");
+    return;
+  }
+
+  // Find new group info
+  $new_group = datagov_redirect_find_new_node($group_id);
+
+  if (!$new_group) {
+    drupal_not_found();
+    return;
+  }
+
+  // the url string for the group  dsm( node_load($new_group));
+  $purl = $new_group->purl;
+
+  drupal_goto("page/$purl-resources");
+  return;
+}
+
+
+function datagov_redirect_find_new_node($nid) {
+  if (!is_numeric($nid)) {
+    return;
+  }
+
+$sql = <<<EOD
+    SELECT destid1 FROM
+
+    (
+    select sourceid1, destid1 from {migrate_map_datacommnodeapplication}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodeblog}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodechallenge}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodedatasites}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodeforum}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodegroup}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodepage}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodeslide}
+    union
+    select sourceid1, destid1 from {migrate_map_datacommnodetool}
+    ) a
+
+    WHERE sourceid1=:nid LIMIT 1
+EOD;
+  $result = db_query($sql, array(':nid' => $nid));
+
+  $nid_new = $result->fetchField();
+
+  if (!$nid_new) {
+    return;
+  }
+
+  $node_new = node_load($nid_new);
+  return $node_new;
+}
+
+
+function datagov_redirect_find_new_tag($tid) {
+  if (!is_numeric($tid)) {
+    return;
+  }
+
+$sql = <<<EOD
+    SELECT destid1 FROM
+    {migrate_map_datacommtermsforums}
+    WHERE sourceid1=:tid LIMIT 1
+EOD;
+  $result = db_query($sql, array(':tid' => $tid));
+
+  $tid_new = $result->fetchField();
+
+  return $tid_new;
+}

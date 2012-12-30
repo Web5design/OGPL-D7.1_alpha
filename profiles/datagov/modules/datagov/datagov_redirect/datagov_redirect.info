@@ -1,0 +1,3 @@
+name = Datagov Redirect
+description = Map and redirect old communities site URLs to new ones.
+core = 7.x

@@ -1,0 +1,10 @@
+name = Views External Database
+description = Defines a views handler that can access external databases.
+package = Datagov custom
+version = VERSION
+core = 7.x
+
+dependencies[] = views
+files[] = views_external_database.views.inc
+files[] = views_external_database_handler_filter_custom_datetime.inc
+files[] = views_external_database_digits_views_handler_field.inc

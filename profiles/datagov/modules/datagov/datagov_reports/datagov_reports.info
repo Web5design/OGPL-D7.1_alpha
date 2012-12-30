@@ -1,0 +1,5 @@
+name = Data.gov Reports
+description = Google Analytics reports for Data.gov.
+dependencies[] = google_analytics_reports
+package = REI Custom
+core = 7.x

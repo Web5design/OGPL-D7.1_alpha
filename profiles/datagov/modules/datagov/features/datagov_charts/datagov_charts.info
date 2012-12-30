@@ -1,0 +1,22 @@
+name = Datagov Charts
+core = 7.x
+package = Datagov
+php = 5.2.4
+dependencies[] = ctools
+dependencies[] = php
+dependencies[] = views
+dependencies[] = views_external_database
+dependencies[] = views_highcharts
+features[ctools][] = views:views_default:3.0
+features[features_api][] = api:1
+features[views_view][] = metrics_daily_visitor
+features[views_view][] = metrics_download_by_category
+features[views_view][] = metrics_geodata
+features[views_view][] = metrics_monthly_download
+features[views_view][] = metrics_monthly_page_views
+features[views_view][] = metrics_monthly_visitor
+features[views_view][] = metrics_rawtool
+features[views_view][] = metrics_suggested_dataset
+features[views_view][] = metrics_top_country
+features[views_view][] = metrics_top_state
+

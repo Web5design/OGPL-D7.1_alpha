@@ -1,0 +1,5 @@
+name = Fusionmap Display
+description = Alters node views of a content type to display as a map.
+core = 7.x
+package = REI Module
+version = 7.x-1.0-beta1

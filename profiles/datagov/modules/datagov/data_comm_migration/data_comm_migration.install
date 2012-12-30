@@ -1,0 +1,123 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the data_comm_migration module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function data_comm_migration_install() {
+  // Create vocabularies for Forums, Application Categories, Data/Tools Categories, Data/tools Vocabulary, Resource Categories, Tags, Tools Identifier and Userpoints  
+
+  $description = st('Legacy: Forum Categories');
+  $help = st('Forum Categories');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Forum Categories',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_forum',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Application Categories');
+  $help = st('Legacy: Application Categories');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Application Categories',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_application_categories',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Data/Tools Categories');
+  $help = st('Legacy: Data/Tools Categories');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Data/Tools Categories',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_data_tools_categories',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Data/tools Vocabulary');
+  $help = st('Legacy: Data/tools Vocabulary');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Data/tools Vocabulary',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_data_tools_vocabulary',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Resource Categories');
+  $help = st('Legacy: Resource Categories');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Resource Categories',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_resource_categories',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Tags');
+  $help = st('Legacy: Tags');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Tags',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_tags',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Tools Identifier');
+  $help = st('Legacy: Tools Identifier');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Tools Identifier',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_tools_identifier',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: First Userpoints category');
+  $help = st('Legacy: First Userpoints category');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy First Userpoints category',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_userpoints_first',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+
+  $description = st('Legacy: Second Userpoints category');
+  $help = st('Legacy: Second Userpoints category');
+  $vocabulary = (object) array(
+    'name' => 'Migrate legacy Second Userpoints category',
+    'description' => $description,
+    'machine_name' => 'legacy_datacomm_userpoints_second',
+    'help' => $help,
+  );
+  taxonomy_vocabulary_save($vocabulary);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function data_comm_migration_uninstall() {
+  if ($vids = taxonomy_vocabulary_load_multiple(array(), array(
+    'machine_name' => 'legacy_datacomm_forum',
+    'machine_name' => 'legacy_datacomm_application_categories',
+    'machine_name' => 'legacy_datacomm_data_tools_categories',
+    'machine_name' => 'legacy_datacomm_data_tools_vocabulary',
+    'machine_name' => 'legacy_datacomm_resource_categories',
+    'machine_name' => 'legacy_datacomm_tags',
+    'machine_name' => 'legacy_datacomm_tools_identifier',
+    'machine_name' => 'legacy_datacomm_userpoints_first',
+    'machine_name' => 'legacy_datacomm_userpoints_second',
+    ))) {
+    // Grab key of the first returned vocabulary.
+    taxonomy_vocabulary_delete(key($vids));
+  }
+}

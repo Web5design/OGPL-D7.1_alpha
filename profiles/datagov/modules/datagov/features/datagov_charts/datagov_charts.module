@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Charts feature.
+ */
+
+include_once 'datagov_charts.features.inc';

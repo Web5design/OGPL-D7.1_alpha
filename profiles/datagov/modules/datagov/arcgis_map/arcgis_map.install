@@ -1,0 +1,108 @@
+<?php
+
+function arcgis_map_install() {
+  // Update the database cache to install the new node type
+  node_types_rebuild();
+
+  foreach (_arcgis_map_installed_fields() as $field) {
+    field_create_field($field);
+  }
+
+  foreach (_arcgis_map_installed_instances() as $instance) {
+    $instance['entity_type'] = 'node';
+    $instance['bundle'] = 'arcgis_map';
+    field_create_instance($instance);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ */
+function arcgis_map_uninstall() {
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => 'arcgis_map'));
+  $nids = array();
+  foreach ($result as $row) {
+    $nids[] = $row->nid;
+  }
+
+  node_delete_multiple($nids);
+
+  foreach (array_keys(_arcgis_map_installed_fields()) as $field) {
+    field_delete_field($field);
+  }
+
+  // Loop over any remaining field instances attached to the arcgis_map
+  // content type (such as the body field) and delete them individually.
+  // http://api.drupal.org/api/function/field_delete_field/7
+  $instances = field_info_instances('node', 'arcgis_map');
+  foreach ($instances as $instance_name => $instance) {
+    field_delete_instance($instance);
+  }
+
+
+
+  // Delete our content type
+  // http://api.drupal.org/api/function/node_type_delete/7
+  node_type_delete('arcgis_map');
+
+  // Purge all field infromation
+  // http://api.drupal.org/api/function/field_purge_batch/7
+  field_purge_batch(1000);
+}
+
+
+
+/**
+ * Returns a structured array defining the fields created by this content type.
+ */
+function _arcgis_map_installed_fields() {
+  $t = get_t();
+  return array(
+    'arcgis_map_server' => array(
+      'field_name' => 'arcgis_map_server',
+      'cardinality' => 1,
+      'type'        => 'text',
+      'settings'    => array(
+        'max_length' => 256,
+      ),
+    ),
+    'arcgis_map_id' => array(
+      'field_name' => 'arcgis_map_id',
+      'cardinality' => 1,
+      'type'        => 'text',
+      'settings'    => array(
+        'max_length' => 60,
+      ),
+    ),
+  );
+}
+
+/**
+ * Returns a structured array defining the instances for this content type.
+ */
+function _arcgis_map_installed_instances() {
+  $t = get_t();
+  return array(
+    'arcgis_map_server' => array(
+      'field_name' => 'arcgis_map_server',
+      'label'       => $t('ArcGIS Server Address'),
+      'required' => TRUE,
+      'widget'      => array(
+        'type'    => 'text_textfield',
+        'weight'  => -2,
+      ),
+    ),
+    'arcgis_map_id' => array(
+      'field_name' => 'arcgis_map_id',
+      'label'       => $t('ArcGIS Map ID'),
+      'required' => TRUE,
+      'widget'      => array(
+        'type'    => 'text_textfield',
+        'weight'  => -1,
+      ),
+    ),
+  );
+}
+

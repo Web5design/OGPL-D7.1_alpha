@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Announcements feature.
+ */
+
+include_once 'datagov_announcements.features.inc';

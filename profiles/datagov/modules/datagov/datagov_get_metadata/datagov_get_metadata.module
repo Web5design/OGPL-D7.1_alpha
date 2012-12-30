@@ -1,0 +1,570 @@
+<?php
+
+/**
+ * Implementation of hook_menu().
+ */
+function datagov_get_metadata_menu() {
+  $items = array();
+  $items['admin/config/datagov_get_metadata'] = array(
+    'title' => t('Configure Data.gov Get Metadata'),
+    'description' => t('Configuration for Data.gov Get Metadata module.'),
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer modules'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('datagov_get_metadata_settings'),
+  );
+  $items['dataset/%/json'] = array(
+    'title' => t('Data.gov Get Metadata'),
+    'type' => MENU_CALLBACK,
+    'access callback' => true,
+    'page callback' => 'datagov_get_metadata_page',
+    'page arguments' => array(1),
+  );
+  return $items;
+}
+
+/**
+ * Render configuration form.
+ */
+function datagov_get_metadata_settings() {
+  $form['raw_data_access_point'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Data.gov Metadata Access Point'),
+    '#description' => t('Access URL to retrieve data.gov raw data/apps metadata in JSON.'),
+    '#field_suffix' => t('[ID]'),
+    '#default_value' => variable_get('raw_data_access_point', 'http://admin.data.gov/dataset/get/id/'),
+    '#size' => 50,
+    '#maxlength' => 128,
+    '#required' => true,
+  );
+  $form['geo_data_access_point'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Geo.Data.gov Metadata Access Point'),
+    '#description' => t('Access URL to retrieve geospatial metadata in JSON.'),
+    '#field_suffix' => t('?getxml={[UUID]}'),
+    '#default_value' => variable_get('geo_data_access_point', 'http://geo.data.gov/geoportal/csw'),
+    '#size' => 50,
+    '#maxlength' => 128,
+    '#required' => true,
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Retrieves metadata in JSON format from admin/geo and pass it through.
+ */
+function datagov_get_metadata_page($id, $echo_out = TRUE) {
+  $id = trim($id);
+  $id = str_replace('_', '', check_plain($id));
+
+  if (preg_match('/^\d+$/', $id)) {
+    $url = variable_get('raw_data_access_point', 'http://admin.data.gov/dataset/get/id/');
+    $url .= $id;
+    $is_geo = false;
+  } else if (preg_match('/^[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/', $id)) {
+    // Technically this preg_match is incorrect, as "\w" matches "a-zA-z0-9_" and
+    // "_" is not a valid character for geospatical ID - however, underscores are 
+    // stripped out in the beginning while running check_plain().
+    $url = variable_get('geo_data_access_point', 'http://geo.data.gov/geoportal/csw');
+    $url .= '?getxml=' . urlencode('{' . $id . '}');
+    $is_geo = true;
+  } else {
+    drupal_fast_404();
+    return null;
+  }
+
+  $cid = "dataset_json_{$id}";
+  $result = cache_get($cid, 'cache');
+
+  if (1==1 || !$result) {
+    $ch = curl_init($url);
+    curl_setopt_array($ch, array(
+        CURLOPT_HEADER => false,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_BINARYTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_TIMEOUT => 15,
+    ));
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    // Geo returns XML, so it must be processed first.
+    if ($is_geo) {
+      $result = _process_geo_record($id, $url, $result);
+    }
+
+    // Convert 'null' values to empty string ''.
+    $array = json_decode($result);
+    foreach ($array as $key => $value) {
+      if ((!is_array($value)) && ($value == null)) {
+        $array->$key = '';
+      }
+    }
+    $result = json_encode($array);
+
+    cache_set($cid, $result, 'cache', (time() + (60 * 60 * 24)));
+  } else {
+    $result = $result->data;
+  }
+
+  if ($echo_out) {
+    // Skip theme and just return result as JSON
+    header("Content-type: application/json\n\n");
+    echo $result;
+    return null;
+  }
+  else {
+    return $result;
+  }
+}
+
+/**
+ * Internal procedural function to process geospatial XML to JSON.
+ */
+function _process_geo_record($id, $url, $result) {
+  $data = array();
+  $xml = simplexml_load_string($result);
+  unset($result);
+
+  $is_iso = false;
+  if ($xml && $namespaces = $xml->getNameSpaces(true) && $namespaces['gmi']) {
+    $is_iso = true;
+  }
+
+  if ($is_iso) {
+    // ISO format.
+    // get it into a DOMDocument so that we dont have to deal with namespaces.
+    $xml = dom_import_simplexml($xml);
+
+    // TODO: There are multiple organisationName tags. seems the first one works ok.
+    $data['agency'] = $xml->getElementsByTagName('contact')->item(0)->getElementsByTagName('organisationName')->item(0)->nodeValue;//getElementsByTagName('CharacterString')->item(0);//->nodeValue;
+    // foreach($xml->getElementsByTagName('identificationInfo') as $asd) {
+    //   if ($asd->getElementsByTagName('organisationName')->item(0)) {
+    //     dsm($asd->getElementsByTagName('organisationName')->item(0)->getElementsByTagName('CharacterString')->item(0)->nodeValue);
+    //   }
+    // }
+
+    $data['rating'] = '';
+    $data['votes'] = '';
+    $data['count'] = '';
+
+    $data['title'] = $xml->getElementsByTagName('identificationInfo')->item(0)->getElementsByTagName('title')->item(0)->nodeValue;
+
+    $data['description'] = $xml->getElementsByTagName('identificationInfo')->item(0)->getElementsByTagName('abstract')->item(0)->nodeValue;
+
+    $data['keywords'] = array();
+    foreach ($xml->getElementsByTagName('descriptiveKeywords') as $descriptiveKeywords) {
+      $theme_value = trim($descriptiveKeywords->getElementsByTagName('title')->item(0)->nodeValue);
+      if (empty($theme_value) || in_array($theme_value, $data['keywords'])) {
+          continue;
+      }
+      $data['keywords'][] = $theme_value;
+      foreach ($descriptiveKeywords->getElementsByTagName('keyword') as $keyword) {
+        $data['keywords'][] = trim($keyword->nodeValue);
+      } 
+    }
+    if (!empty($data['keywords'])) {
+      $data['keywords'] = implode(", ", $data['keywords']);
+    }
+
+    $data['overall_rating'] = '';
+    $data['overall_votes'] = '';
+    $data['agency_name'] = $data['agency'];
+    $data['subagency_name'] = '';
+
+    $data['category_name'] ="";
+    $category_name = trim($xml->getElementsByTagName('topicCategory')->item(0)->nodeValue);
+    if ($category_name) {
+      $map = _categories_map();
+      $data['category_name'] = $map[$category_name];
+    }
+    
+    $data['date_released'] = "";
+    foreach ($xml->getElementsByTagName('identificationInfo') as $identificationInfo) {
+      $dateType = trim($identificationInfo->getElementsByTagName('dateType')->item(0)->nodeValue);
+      if ($dateType == "publication") {
+        $data['date_released'] = trim($identificationInfo->getElementsByTagName('date')->item(0)->getElementsByTagName('date')->item(0)->nodeValue);
+        break;
+      }
+    }
+
+    $data['date_updated'] = '';
+
+    // TODO missing <gmd:temporalElement>
+    $data['temporal_coverage'] = '';
+    // $data['temporal_coverage'] = isset($xml->idinfo->timeperd) ?
+    //     implode(', ', _get_temporal_coverage($xml->idinfo->timeperd)) : '';
+
+    // TODO missing <gml:beginPosition>
+    $data['periodicity'] = "";
+    // $data['periodicity'] = isset($xml->idinfo->status->update) ?
+    //     (string)$xml->idinfo->status->update : '';
+
+    $data['public_suggested'] = 'N';
+    $data['utility_rating'] = '';
+    $data['utility_votes'] = '';
+    $data['usefulness_rating'] = '';
+    $data['usefulness_votes'] = '';
+    $data['ease_of_access_rating'] = '';
+    $data['ease_of_access_votes'] = '';
+    $data['data_category_type_id'] = 0;
+    $data['data_category_type_name'] = 'Geodata';
+    $data['data_specialized_category_name'] = 'Geospatial';
+    $data['unique_id'] = $id;
+
+    $data['citation'] = $xml->getElementsByTagName('citedResponsibleParty')->item(0)->getElementsByTagName('organisationName')->item(0)->nodeValue;
+
+    $data['agency_program_page'] = '';
+
+    $data['agency_data_series_page'] = '';
+    foreach ($xml->getElementsByTagName('identificationInfo') as $identificationInfo) {
+      if ($identificationInfo->getElementsByTagName('CI_OnlineResource')->item(0)) {
+        $data['agency_data_series_page'] = trim($identificationInfo->getElementsByTagName('CI_OnlineResource')->item(0)->getElementsByTagName('linkage')->item(0)->nodeValue);
+        break;        
+      }
+    }
+
+    $data['unit_of_analysis'] = '';
+    $data['granularity'] = '';
+
+    $data['geographic_coverage'] = trim($xml->getElementsByTagName('EX_GeographicBoundingBox')->item(0)->nodeValue);
+    if (!empty($data['geographic_coverage'])) {
+      $data['geographic_coverage'] = preg_split("/[\s,]+/", $data['geographic_coverage']);
+      dsm($data['geographic_coverage']);
+      // Change from e.a.s.n to e.a.n.s.
+      $data['geographic_coverage'] = trim($data['geographic_coverage'][0]) . ', ' . trim($data['geographic_coverage'][1]) . ', ' . trim($data['geographic_coverage'][3]) . ', ' . trim($data['geographic_coverage'][2]);
+    }
+
+    $data['collection_mode'] = '';
+    $data['collection_instrument'] = '';
+
+    // TODO missing <gmd:featureCatalogueCitation>
+    // $data['dictionary_list'] = isset($xml->eainfo->overview->eaover) ?
+    //     (string)$xml->eainfo->overview->eaover : '';
+    $data['dictionary_list'] = "";
+
+    $data['technical_documentation'] = '';
+    $data['data_specialized_category_id'] = 6;
+    $data['fgdc_compliance'] = 'Y';
+    $data['additional_metadata'] = $url;
+    $data['statistical_methodology'] = '';
+    $data['statistical_sampling'] = '';
+    $data['statistical_estimation'] = '';
+    $data['statistical_weighting'] = '';
+    $data['statistical_disclosure_avoidance'] = '';
+    $data['statistical_questionnaire_design'] = '';
+    $data['statistical_series_breaks'] = '';
+    $data['statistical_non_response_adjustment'] = '';
+    $data['statistical_seasonal_adjustment'] = '';
+    $data['statistical_data_quality'] = '';
+    $data['xml'] = array();
+    $data['csv'] = array();
+    $data['xls'] = array();
+    $data['kml'] = array();
+    $data['esri'] = array();
+    $data['rdf'] = array();
+    $data['pdf'] = array();
+    $data['map'] = array();
+    $data['data_extraction'] = array();
+    $data['rss'] = array();
+    $data['widget'] = array();
+
+    $access_point =  ($data['agency_data_series_page']) ? $data['agency_data_series_page'] :
+        'http://geo.data.gov/geoportal/catalog/search/resource/details.page?uuid=%7B' .  $id . '%7D';
+    $data['geodata'] = array(array('access_point' => $access_point));
+
+  }
+  else {
+    // FGDC format.
+    if (isset($xml->idinfo->citation->citeinfo->pubinfo->publish)) {
+      $data['agency'] = (string)$xml->idinfo->citation->citeinfo->pubinfo->publish;
+    } else if (isset($xml->idinfo->citation->citeinfo->origin)) {
+      $data['agency'] = (string)$xml->idinfo->citation->citeinfo->origin;
+    } else {
+      $data['agency'] = '';
+    }
+
+    $data['rating'] = '';
+    $data['votes'] = '';
+    $data['count'] = '';
+
+    $data['title'] = isset($xml->idinfo->citation->citeinfo->title) ?
+        (string)$xml->idinfo->citation->citeinfo->title : '';
+
+    $data['description'] = isset($xml->idinfo->descript->abstract) ?
+        (string)$xml->idinfo->descript->abstract : '';
+
+    $data['keywords'] = isset($xml->idinfo->keywords) ?
+      implode(', ', _get_keywords($xml->idinfo->keywords)) : '';
+
+    $data['overall_rating'] = '';
+    $data['overall_votes'] = '';
+    $data['agency_name'] = $data['agency'];
+    $data['subagency_name'] = '';
+
+    $data['category_name'] = isset($xml->idinfo->keywords->theme) ?
+        implode(', ', _get_categories($xml->idinfo->keywords->theme)) : '';
+
+    $data['date_released'] = isset($xml->idinfo->citation->citeinfo->pubdate) ?
+        (string)$xml->idinfo->citation->citeinfo->pubdate : '';
+
+    $data['date_updated'] = '';
+
+    $data['temporal_coverage'] = isset($xml->idinfo->timeperd) ?
+        implode(', ', _get_temporal_coverage($xml->idinfo->timeperd)) : '';
+
+    $data['periodicity'] = isset($xml->idinfo->status->update) ?
+        (string)$xml->idinfo->status->update : '';
+
+    $data['public_suggested'] = 'N';
+    $data['utility_rating'] = '';
+    $data['utility_votes'] = '';
+    $data['usefulness_rating'] = '';
+    $data['usefulness_votes'] = '';
+    $data['ease_of_access_rating'] = '';
+    $data['ease_of_access_votes'] = '';
+    $data['data_category_type_id'] = 0;
+    $data['data_category_type_name'] = 'Geodata';
+    $data['data_specialized_category_name'] = 'Geospatial';
+    $data['unique_id'] = $id;
+
+    $data['citation'] = isset($xml->idinfo->citation->citeinfo->origin) ?
+      (string)$xml->idinfo->citation->citeinfo->origin : '';
+
+    $data['agency_program_page'] = '';
+
+    $data['agency_data_series_page'] =  isset($xml->idinfo->citation->citeinfo->onlink) ?
+        (string)$xml->idinfo->citation->citeinfo->onlink : '';
+
+    $data['unit_of_analysis'] = '';
+    $data['granularity'] = '';
+
+    $data['geographic_coverage'] = isset($xml->idinfo->spdom->bounding) ?
+        implode(', ', _get_geographic_coverage($xml->idinfo->spdom->bounding)) : '';
+
+    $data['collection_mode'] = '';
+    $data['collection_instrument'] = '';
+
+    $data['dictionary_list'] = isset($xml->eainfo->overview->eaover) ?
+        (string)$xml->eainfo->overview->eaover : '';
+
+    $data['technical_documentation'] = '';
+    $data['data_specialized_category_id'] = 6;
+    $data['fgdc_compliance'] = 'Y';
+    $data['additional_metadata'] = $url;
+    $data['statistical_methodology'] = '';
+    $data['statistical_sampling'] = '';
+    $data['statistical_estimation'] = '';
+    $data['statistical_weighting'] = '';
+    $data['statistical_disclosure_avoidance'] = '';
+    $data['statistical_questionnaire_design'] = '';
+    $data['statistical_series_breaks'] = '';
+    $data['statistical_non_response_adjustment'] = '';
+    $data['statistical_seasonal_adjustment'] = '';
+    $data['statistical_data_quality'] = '';
+    $data['xml'] = array();
+    $data['csv'] = array();
+    $data['xls'] = array();
+    $data['kml'] = array();
+    $data['esri'] = array();
+    $data['rdf'] = array();
+    $data['pdf'] = array();
+    $data['map'] = array();
+    $data['data_extraction'] = array();
+    $data['rss'] = array();
+    $data['widget'] = array();
+
+    $access_point =  ($data['agency_data_series_page']) ? $data['agency_data_series_page'] :
+        'http://geo.data.gov/geoportal/catalog/search/resource/details.page?uuid=%7B' .  $id . '%7D';
+    $data['geodata'] = array(array('access_point' => $access_point));
+
+  }
+
+  return json_encode($data);
+}
+
+/**
+ * Sub-procedure to process the keywords section of the geospatial XML.
+ */
+function _get_keywords($xml) {
+  $keywords = array();
+
+  if (isset($xml->theme)) {
+    foreach ($xml->theme as $theme) {
+      if (isset($theme->themekt)) {
+        array_push($keywords, $theme->themekt);
+      }
+      if (isset($theme->themekey)) {
+        foreach ($theme->themekey as $themekey) {
+          array_push($keywords, $themekey);
+        }
+      }
+    }
+  }
+  if (isset($xml->place)) {
+    foreach ($xml->place as $place) {
+      if (isset($place->placekt)) {
+        array_push($keywords, $place->placekt);
+      }
+      if (isset($place->placekey)) {
+        foreach ($place->placekey as $placekey) {
+          array_push($keywords, $placekey);
+        }
+      }
+    }
+  }
+  if (isset($xml->temporal)) {
+    foreach ($xml->temporal as $temporal) {
+      if (isset($temporal->tempkt)) {
+        array_push($keywords, $temporal->tempkt);
+      }
+      if (isset($temporal->temporalkey)) {
+        foreach ($temporal->temporalkey as $temporalkey) {
+          array_push($keywords, $temporalkey);
+        }
+      }
+    }
+  }
+  if (isset($xml->stratum)) {
+    foreach ($xml->stratum as $stratum) {
+      if (isset($stratum->stratkt)) {
+        array_push($keywords, $stratum->stratkt);
+      }
+      if (isset($stratum->stratkey)) {
+        foreach ($stratum->stratkey as $stratkey) {
+          array_push($keywords, $stratkey);
+        }
+      }
+    }
+  }
+
+  return $keywords;
+}
+
+/**
+ * Sub-procedure to process the categories section of the geospatial XML.
+ */
+function _get_categories($xml) {
+  $map = _categories_map();
+  $categories = array();
+
+  foreach ($xml as $theme) {
+    if (isset($theme->themekt) && isset($theme->themekey) &&
+        ($theme->themekt == 'ISO 19115 Topic Category')) {
+      foreach ($theme->themekey as $themekey) {
+        $themekey = (string)$themekey;
+        if (($map[$themekey]) && !in_array($map[$themekey], $categories)) {
+          $categories[] = $map[$themekey];
+        }
+      }
+    }
+  }
+  return $categories;
+}
+
+
+function _categories_map() {
+  return array(
+    'biota' => 'Biology and Ecology',
+    'boundaries' => 'Administrative and Political Boundaries',
+    'climatologyMeteorologyAtmosphere' => 'Atmospheric and Climatic',
+    'economy' => 'Business and Economic',
+    'elevation' => 'Elevation and Derived Products',
+    'environment' => 'Environment and Conservation',
+    'farming' => 'Agriculture and Farming',
+    'geoscientificInformation' => 'Geological and Geophysical',
+    'health' => 'Human Health and Disease',
+    'imageryBaseMapsEarthCover' => 'Imagery and Base Maps',
+    'inlandWaters' => 'Inland Water Resources',
+    'intelligenceMilitary' => 'Military',
+    'location' => 'Locations and Geodetic Networks',
+    'oceans' => 'Oceans and Estuaries',
+    'planningCadastre' => 'Cadastral',
+    'society' => 'Cultural, Society, and Demographics',
+    'structure' => 'Facilities and Structures',
+    'transportation' => 'Transportation Networks',
+    'utilitiesCommunication' => 'Utilities and Communication',
+  );
+}
+/**
+ * Sub-procedure to process the temporal coverage section of the geospatial XML.
+ */
+function _get_temporal_coverage($xml) {
+  $coverage = array();
+  if (isset($xml->timeinfo)) {
+    if (isset($xml->timeinfo->sngdate)) {
+      $buffer = array();
+      if (isset($xml->timeinfo->sngdate->caldate)) {
+        $buffer[] = (string)$xml->timeinfo->sngdate->caldate;
+      }
+      if (isset($xml->timeinfo->sngdate->time)) {
+        $buffer[] = (string)$xml->timeinfo->sngdate->time;
+      }
+      if (count($buffer)) {
+        $coverage[] = implode(' ', $buffer);
+      }
+    } else if (isset($xml->timeinfo->mdattim)) {
+      foreach ($xml->timeinfo->mdattim as $mdate) {
+        $buffer = array();
+        if (isset($mdate->caldate)) {
+          $buffer[] = (string)$mdate->caldate;
+        }
+        if (isset($mdate->time)) {
+          $buffer[] = (string)$mdate->time;
+        }
+        if (count($buffer)) {
+          $coverage[] = implode(' ', $buffer);
+        }
+      }
+    } else if (isset($xml->timeinfo->rngdates)) {
+      $range = array();
+      $buffer = array();
+      if (isset($xml->timeinfo->rngdates->begdate)) {
+        $buffer[] = (string)$xml->timeinfo->rngdates->begdate;
+      }
+      if (isset($xml->timeinfo->rngdates->begtime)) {
+        $buffer[] = (string)$xml->timeinfo->rngdates->begtime;
+      }
+      if (count($buffer)) {
+        $range[] = implode(' ', $buffer);
+      }
+      $buffer = array();
+      if (isset($xml->timeinfo->rngdates->enddate)) {
+        $buffer[] = (string)$xml->timeinfo->rngdates->enddate;
+      }
+      if (isset($xml->timeinfo->rngdates->endtime)) {
+        $buffer[] = (string)$xml->timeinfo->rngdates->endtime;
+      }
+      if (count($buffer)) {
+        $range[] = implode(' ', $buffer);
+      }
+      if (count($range)) {
+        $coverage[] = implode(' - ', $range);
+      }
+    }
+  }
+  if (isset($xml->temporal_current)) {
+    $coverage[] = (string)$xml->temporal_current;
+  }
+  return $coverage;
+}
+
+/**
+ * Sub-procedure to process the geographic coverage section of the geospatial XML.
+ */
+function _get_geographic_coverage($xml) {
+  $coverage = array();
+  if (isset($xml->westbc)) {
+    $coverage[] = (string)$xml->westbc;
+  }
+  if (isset($xml->eastbc)) {
+    $coverage[] = (string)$xml->eastbc;
+  }
+  if (isset($xml->northbc)) {
+    $coverage[] = (string)$xml->northbc;
+  }
+  if (isset($xml->southbc)) {
+    $coverage[] = (string)$xml->southbc;
+  }
+  return $coverage;
+}

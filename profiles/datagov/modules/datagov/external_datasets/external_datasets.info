@@ -1,0 +1,6 @@
+name = External Datasets
+description = Populate Data from external sources
+core = 7.x
+package = REI Custom
+version = 7.x-1.0
+dependencies[] = datagov_get_metadata

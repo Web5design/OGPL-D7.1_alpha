@@ -1,0 +1,7 @@
+name = Data.gov specific customizations
+description = Data.gov specific customizations.
+package = REI Custom
+core = 7.x
+
+; Views handlers
+files[] = views/handlers/og_handler_filter_datagov_group_audience_gid.inc

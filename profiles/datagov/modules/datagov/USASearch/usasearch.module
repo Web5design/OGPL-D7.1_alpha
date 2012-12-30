@@ -1,0 +1,405 @@
+<?php
+/**
+ * @file
+ * Replaces Drupal search, redirects all search queries to USASearch service (http://search.usa.gov).
+ */
+
+/**
+ * System settings form for USASearch.
+ */
+function usasearch_admin() {
+  $form = array();
+
+  $form['usasearch_affiliate_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Affiliate name'),
+    '#default_value' => variable_get('usasearch_affiliate_name', ''),
+    '#size' => 30,
+    '#maxlength' => 30,
+    '#description' => t('Please enter your affiliate name provided by <a href="@usasearch_affiliates_url">USASearch</a>, eg. "example.gov".', array('@usasearch_affiliates_url' => url('https://search.usa.gov/affiliates'))),
+    '#required' => TRUE,
+  );
+  $form['usasearch_api_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('API key'),
+    '#default_value' => variable_get('usasearch_api_key', ''),
+    '#size' => 40,
+    '#maxlength' => 32,
+    '#description' => t('You may enter your API key provided by <a href="@usasearch_affiliates_url">USASearch</a>.', array('@usasearch_affiliates_url' => url('https://search.usa.gov/affiliates'))),
+  );
+  $form['usasearch_action_domain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Search domain'),
+    '#default_value' => variable_get('usasearch_action_domain', 'search.usa.gov'),
+    '#size' => 30,
+    '#maxlength' => 50,
+    '#description' => t('You may enter a custom search domain, eg. "search.commerce.gov", or leave the default "search.usa.gov". This will change the search form action to submit search requests to the search domain entered. <strong>NOTE: Only change this if USASearch has configured this option for your search affiliate!</strong>'),
+    '#required' => FALSE,
+  );
+  $form['usasearch_search_page'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Keep Drupal search page'),
+    '#default_value' => variable_get('usasearch_search_page', 0),
+    '#description' => t("To make best use of the USASearch module on your site the 'Search box' option should be enabled in the <a href='@usasearch_theme_settings'>global theme settings</a> or in your default theme settings or the search block placed on your site. Check this option if you want to keep the Drupal search page instead of redirecting this to USASearch. If you do neither of these the USASearch module won't be of much use. <strong>NOTE: You must clear your menu cache if you enable this setting.</strong>", array('@usasearch_theme_settings' => url('admin/build/themes/settings'))),
+    '#required' => FALSE,
+  );
+  if (module_exists('og')) {
+    $form['usasearch_og_sensitive'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Search within Organic Group'),
+      '#default_value' => variable_get('usasearch_og_sensitive', 0),
+      '#description' => t("If context is within a Orangic Group, the scope of search will be within <strong>@base_root/[spaces_og_purl]/</strong>. \"Keep Drupal search page\" above has to be enabled to use this option.", array('@base_root' => $GLOBALS['base_root'])),
+      '#required' => FALSE,
+    );
+  }
+  $form['usasearch_discovery_tag'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Discovery Tag'),
+    '#default_value' => variable_get('usasearch_discovery_tag', 1),
+    '#description' => t("The best way to ensure the USASearch service has complete and timely coverage of your content in their index is to add their discovery tag on your webpages. This option does just that."),
+    '#required' => FALSE,
+  );
+  $form['usasearch_typeahead_options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Type-ahead search settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#description' => t('Type-ahead for USASearch allows visitors to quickly see search suggestions as they type their search. Learn <a href="@usasearch_affiliates_howitworks">how it works</a>. Also see instructions on <a href="@usasearch_type-ahead">how we implemented type-ahead search</a> in this module.', array('@usasearch_affiliates_howitworks' => url('http://usasearch.howto.gov/post/14511943779/how-to-implement-type-ahead-search'), '@usasearch_type-ahead' => url('http://usasearch.howto.gov/post/18861028503/how-to-add-our-code-to-your-website'))),
+  );
+  $form['usasearch_typeahead_options']['usasearch_affiliate_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Type-ahead affiliate ID'),
+    '#default_value' => variable_get('usasearch_affiliate_id', ''),
+    '#size' => 4,
+    '#maxlength' => 4,
+    '#description' => t('Please enter the affiliate ID provided by <a href="@usasearch_affiliates_url">USASearch</a>, eg. "77", to enable the type-ahead search suggestion feature on this Drupal site.', array('@usasearch_affiliates_url' => url('https://search.usa.gov/affiliates'))),
+    '#required' => FALSE,
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_preprocess_page().
+ * To output required javascript and css references.
+ */
+function usasearch_preprocess_page(&$variables) {
+  // Declare the variable
+  $inline_js = '';
+  // Check for usasearch_affiliate_id variable, if set output javascript and css references.
+  // Detailed info about this USASearch feature here: http://usasearch.howto.gov/post/18861028503/how-to-add-our-code-to-your-website.
+  if (variable_get('usasearch_affiliate_id', '')) {
+    // Add external scripts into $variables['head'], instead of $variables['scripts'], due to jquery_update module, any 6-2x version as of 12/29/2011, clobbering $variables['scripts'].
+    // This also means we need to defer the script loading so that they see the jquery javascript since these lines will print before the jquery script include.
+    // See jquery_update module issue http://drupal.org/node/965680 for more information and to check the status of this problem.
+    drupal_add_js('http://search.usa.gov/javascripts/jquery/jquery.autocomplete.min.js', array('type' => 'external', 'defer' => TRUE));
+    drupal_add_js('http://search.usa.gov/javascripts/sayt.js', array('type' => 'external', 'defer' => TRUE));
+
+    // Add external css.
+    drupal_add_css('http://search.usa.gov/stylesheets/compiled/sayt.css', array('type' => 'external', 'media' => 'all'));
+
+    // Check for usasearch_affiliate_id variable, if set output javascript inline with affilite id to limit suggestions.
+    if ($affiliate_id = check_plain(variable_get('usasearch_affiliate_id', ''))) {
+      $inline_js = "var usagov_sayt_url = 'http://search.usa.gov/sayt?aid=$affiliate_id&';";
+    }
+  }
+
+  // Check for usasearch_discovery_tag variable, if set output javascript references.
+  if (variable_get('usasearch_discovery_tag', 1)) {
+    if ($affiliate_name = check_plain(variable_get('usasearch_affiliate_name', ''))) {
+      $inline_js .= 'var aid = "' . $affiliate_name . '";';
+    }
+  }
+  // Output contents of $inline_js into one combined inline javascript tag using drupal_add_js function.
+  drupal_add_js($inline_js, 'inline');
+
+  // Check for usasearch_discovery_tag variable, if set output javascript references.
+  if (variable_get('usasearch_discovery_tag', 1)) {
+    if ($affiliate_name = check_plain(variable_get('usasearch_affiliate_name', ''))) {
+      drupal_add_js('http://search.usa.gov/javascripts/stats.js', array('type' => 'external', 'media' => 'all'));
+    }
+  }
+
+}
+
+/**
+ * Page callback function to redirect requests to usasearch.
+ */
+function usasearch_redirect_to_usasearch($query = '') {
+  // Set action_domain from variables table or default to search.usa.gov.
+  $action_domain = check_plain(variable_get('usasearch_action_domain', 'search.usa.gov'));
+
+  // Build $options array drupal_goto() .
+  if ($query) {
+    $options['query']['query'] = filter_xss($query);
+  }
+  if ($affiliate_name = variable_get('usasearch_affiliate_name', '')) {
+    $options['query']['affiliate'] = check_plain($affiliate_name);
+  }
+
+  drupal_goto("http://$action_domain/search", $options);
+}
+
+/**
+ * Page callback function to display usasearch results within site.
+ */
+function usasearch_display_results($query = '') {
+  drupal_set_title('Search');
+  $build['#prefix'] = "<div class='usasearch-results-wrap'>";
+  $build['#suffix'] = "</div>";
+
+  // Display search box at the top.
+  $build['search_form'] = drupal_get_form('search_form', NULL, $query, 'node');
+
+  // Find out the community of the search.
+  if (module_exists('og') && variable_get('usasearch_og_sensitive', 0)) {
+    $space_og = spaces_get_space();
+    if ($space_og && $space_og->group) {
+      $group = $space_og->group;
+    }
+  }
+
+  // Get response from usasearch server.
+  $result_response = usasearch_fetch_results($query, $group);
+
+  // Check if usasearch server responds successfully.
+  if (isset($result_response->error) || $result_response->status_message != 'OK') {
+    $build['search_results'] = array('#markup'=>t('Error connecting to search server.'));
+    watchdog('USASearch', 'Error: ' . $result_response->error, array(), WATCHDOG_CRITICAL);
+    return $build;
+  }
+
+  // Convert '\ue000' and '\ue001' in the response string to <strong> tag.
+  $results = str_replace('\ue000', '<strong>', $result_response->data);
+  $results = str_replace('\ue001', '</strong>', $results);
+
+  $results = json_decode($results, true);
+  // Check if usasearch server reports any error.
+  if (isset($results['error'])) {
+    $build['search_results'] = array('#markup'=>check_plain($results['error']));
+    return $build;
+  }
+
+  $css_path = drupal_get_path('module', 'usasearch') .'/css/usasearch.css';
+  drupal_add_css($css_path);
+
+  // Display search results.
+  $build['search_results'] = array(
+    '#theme' => 'usasearch_results',
+    '#title' => t('Search results'),
+    '#results' => $results,
+    '#search_term' => $query,
+    '#search_scope' => $group?$group->title:'',
+  );
+
+  // Display related search.
+  if ($results['related']) {
+    foreach ($results['related'] as &$related_query) {
+      $related_query = l($related_query, "search/node/$related_query");
+    }
+    $build['search_related'] = array(
+      '#prefix' => '<div class="search_related">',
+      '#suffix' => '</div>',
+      '#theme' => 'item_list',
+      '#title' => t('Related search for @query:', array('@query' => check_plain($query))),
+      '#items' => $results['related'],
+    );
+  }
+
+  // Display pager.
+  global $pager_page_array, $pager_total, $pager_total_items;
+
+  $limit = 10;
+  $element = 0;
+  $total = $results['total'];
+  // It looks like USASearch does not really handle more than 1000 items.
+  $total = $total > 1000 ? 1000 : $total;
+  $pager_total_items[$element] = $total;
+
+  $page = isset($_GET['page']) ? $_GET['page'] : '';
+  $pager_page_array = explode(',', $page);
+  $yourpage = $pager_page_array[$element];
+  $pager_total[$element] = ceil($pager_total_items[$element] / $limit);
+  $pager_page_array[$element] = max(0, min((int)$pager_page_array[$element], ((int)$pager_total[$element]) - 1));
+  $build['search_pager'] = array(
+    '#theme' => 'pager',
+  );
+
+  // Display bottom notice.
+
+  $binglogo_path = drupal_get_path('module', 'usasearch') . '/images/binglogo_en.gif';
+  $img = theme('image', array(
+    'path' => $binglogo_path,
+    'title' => 'results by bing',
+    'alt' => 'results by bing',
+  ));
+
+  $build['search_bing'] = array(
+    '#markup' => "<div class=search-bing>$img</div>",
+  );
+
+
+  $build['search_bottom_notice'] = array(
+    '#markup' => "<div class='search-notice'>Search results were retrieved using the " . check_plain(variable_get('usasearch_action_domain', 'search.usa.gov')) . " API at " . format_date(time(), 'short') . "<br>* The USASearch Program and Federal Government cannot vouch for the data or analyses derived from these data after the data have been retrieved from USASearch.</div>",
+  );
+
+  return $build;
+}
+
+
+function usasearch_fetch_results($query, $group = NULL) {
+  // Set action_domain from variables table or default to search.usa.gov.
+  $action_domain = check_plain(variable_get('usasearch_action_domain', 'search.usa.gov'));
+  // Set affiliate_name from variables table, checking for a value using ternary operator.
+  $affiliate_name = variable_get('usasearch_affiliate_name', '') ? check_plain(variable_get('usasearch_affiliate_name', '')) : '';
+
+  $api_key = variable_get('usasearch_api_key', '') ? check_plain(variable_get('usasearch_api_key', '')) : '';
+
+  $page = isset($_GET['page']) ? intval($_GET['page']) : 0;
+  // Convert from zero-based numbering to one-based.
+  $page++;
+
+  // TODO put site into a variable
+  // $scope = $group?"site:www.data.gov/$group->purl+":"";
+  $scope = $group?"site:www.data.gov/communities+":"";
+
+  $query = "query=" . $scope . urlencode($query);
+  $query .= "&affiliate=$affiliate_name";
+  $query .= "&api_key=$api_key";
+  $query .= "&page=$page" ;
+  $query .= "&index=web";
+
+  $response = drupal_http_request("http://$action_domain/api/search.json?$query");
+
+  return $response;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function usasearch_theme() {
+  return array(
+    'usasearch_results' => array(
+      'template' => 'usasearch_results',
+      'variables' => array(
+        'title' => NULL,
+        'results' => NULL,
+        'search_term' => NULL,
+        'search_scope' => NULL,
+      ),
+    ),
+  );
+}
+
+
+/**
+ * Implements hook_menu().
+ * Adds admin screen under settings.
+ */
+function usasearch_menu() {
+  $items = array();
+
+  $items['admin/settings/usasearch'] = array(
+    'title' => 'USASearch settings',
+    'description' => 'Contains settings for customizing site search to use USASearch',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('usasearch_admin'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_menu_alter().
+ * Point /search and /search/node/% paths to callback which redirects to usasearch.
+ */
+function usasearch_menu_alter(&$items) {
+  // Which page callback to use.
+  if (variable_get('usasearch_search_page', 0)) {
+    $page_callback = 'usasearch_display_results';
+  }
+  else {
+    $page_callback = 'usasearch_redirect_to_usasearch';
+  }
+
+  $items['search/node/%'] = array(
+    'access arguments' => array('search content'),
+    'description' => 'Search results',
+    'page callback' => $page_callback,
+    'page arguments' => array(2,1),
+    'type' => MENU_CALLBACK,
+  );
+}
+
+/**
+ * Implements hook_form_alter().
+ * Changes elements in the search block, search theme form, search page form.
+ */
+function usasearch_form_alter(&$form, &$form_state, $form_id) {
+  // Search block and search box have similar form structure.
+  if ($form_id != 'search_block_form' && $form_id != 'search_theme_form' && $form_id != 'search_form') {
+    return;
+  }
+
+  // If redirecting to usasearch site, set action method, location and read affiliate from variable.
+  if (!variable_get('usasearch_search_page', 0)) {
+    $form['#method'] = 'get';
+    $form['#action'] = 'http://' . check_plain(variable_get('usasearch_action_domain', 'search.usa.gov')) . '/search';
+    // Check for affiliate_name variable before printing the affiliate form element.
+    if ($affiliate_name = check_plain(variable_get('usasearch_affiliate_name', ''))) {
+      $form['affiliate'] = array('#type' => 'hidden', '#value' => $affiliate_name);
+    }
+    // Remove unnecessary, hidden input fields.
+    unset($form['form_build_id']);
+    unset($form['form_token']);
+    unset($form['form_id']);
+  }
+
+  if ($form_id == 'search_form') {
+    // If redirecting to usasearch site, change text field name to query.
+    if (!variable_get('usasearch_search_page', 0)) {
+      $form['basic']['keys']['#name'] = 'query';
+    }
+    // Unset advanced search in search_form.
+    unset($form['advanced']);
+    // Remove node_search_validate from $form['#validate'].
+    for ($i=0; $i < count($form['#validate']); $i++) { 
+      if ($form['#validate'][$i] == 'node_search_validate') {
+        unset($form['#validate'][$i]);
+        break;
+      }
+    }
+    // Add autocomplete classes and set autocomplete HTML attribute to off on text field for type-ahead feature.
+    if (variable_get('usasearch_affiliate_id', '')) {
+      $form['basic']['inline']['keys']['#attributes'] = array('class' => array('usagov-search-autocomplete', 'ui-autocomplete-input', 'ui-corner-all'), 'autocomplete' => 'off');
+    }
+
+    if (module_exists('og') && variable_get('usasearch_search_page', 0) && variable_get('usasearch_og_sensitive', 0)) {
+      if ($space_og = spaces_get_space()) {
+        $form['basic']['submit']['#value'] = 'Search in ' . $space_og->group->title;
+      }
+    }
+
+  }
+  else {
+    // Change text field name to query and title in search_block_form and search_theme_form.
+    if (!variable_get('usasearch_search_page', 0)) {
+      $form[$form_id]['#name'] = 'query';
+    }
+    $form[$form_id]['#title'] = t('Search using USASearch');
+    // Add autocomplete classes and set autocomplete HTML attribute to off on text field for type-ahead feature.
+    if (variable_get('usasearch_affiliate_id', '')) {
+      $form[$form_id]['#attributes'] = array('class' => array('usagov-search-autocomplete', 'ui-autocomplete-input', 'ui-corner-all'), 'autocomplete' => 'off');
+    }
+
+    // Strip purl from form action if not on an og context.
+    if (module_exists('og') && variable_get('usasearch_search_page', 0) && variable_get('usasearch_og_sensitive', 0)) {
+      if (!og_context() && $space_og = spaces_get_space()) {
+        $count = 1;
+        $form['#action'] = str_replace($space_og->group->purl . '/', '', $form['#action'], $count);
+      }
+    }
+
+  }
+}

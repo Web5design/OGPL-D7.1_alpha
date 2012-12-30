@@ -1,0 +1,255 @@
+<?php
+
+define('MIGRATION_SOURCE_DATABASE_NAME', variable_get('migration_source_database_name', ''));
+define('MIGRATION_SOURCE_FILES_DIRECTORY', variable_get('migration_source_file_path', ''));
+define('MIGRATION_DESTINATION_FILES_DIRECTORY', variable_get('migration_destination_file_path', ''));
+
+define('DATA_COMM_TERM_FIRST_USERPOINTS', 1);
+define('DATA_COMM_TERM_TAGS', 2);
+define('DATA_COMM_TERM_FORUM', 3);
+define('DATA_COMM_TERM_DATA_TOOLS_VOCABULARY', 4); 
+define('DATA_COMM_TERM_APPLICATION_USERPOINTS', 5);
+define('DATA_COMM_TERM_RESOURCE_CATEGORIES', 6);
+define('DATA_COMM_TERM_DATA_TOOLS_CATEGORIES', 7);
+define('DATA_COMM_TERM_TOOLS_IDENTIFIER', 8);
+define('DATA_COMM_TERM_APPLICATION_CATEGORIES', 11);
+
+/**
+ * You must implement hook_migrate_api(), setting the API level to 2, for
+ * your migration classes to be recognized by the Migrate module.
+ */
+function data_comm_migration_migrate_api() {
+  $api = array(
+    'api' => 2,
+  );
+  return $api;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function data_comm_migration_menu() {
+  $items = array();
+
+  $items['admin/config/development/data_comm_migration'] = array(
+    'title' => 'Data.gov Communities Migration Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('data_comm_migration_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+/**
+ * Form to setting up the database name and migration file path for migration of data.
+ */
+function data_comm_migration_settings($form, &$form_state) {
+  $form['migration_source_database_name'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Migration Source: Drupal 6 database name',
+    '#default_value' => variable_get('migration_source_database_name', ''),
+    '#description' => t('Please enter the name of the source database.  Note that this database must be accessible by the current website db user and must reside on the same db server.'),
+    '#required' => TRUE,
+  );
+
+  $form['migration_source_file_path'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Migration Source: Drupal 6 <em>files</em> directory path',
+    '#default_value' => variable_get('migration_source_file_path', ''),
+    '#description' => t('Please enter the full path to get to the home directory of the Drupal 6 source site - the files will be found through the base'),
+    '#required' => TRUE,
+    '#maxlength' => 600,
+  );
+
+  $form['data_comm_destination_file_path'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Migration Destination: Files Path',
+    '#default_value' => variable_get('data_comm_destination_file_path', DRUPAL_ROOT),
+    '#description' => t('Please enter the full path to get to the home directory of the destination site - the files will be found through the base'),
+    '#required' => TRUE,
+    '#maxlength' => 600,
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Retrieve the user associated with a node based on their username
+ */
+function data_comm_migration_get_user($username) {
+  $result = db_select('users', 'u')
+    ->fields('u', array('uid'))
+    ->condition('u.name', $username, '=')
+    ->execute()
+    ->fetchObject();
+
+  return is_object($result) && !empty($result->uid) ? $result->uid : NULL;
+}
+
+/**
+ * Retrieve the set of term associated with a node from the migration database.
+ */
+function data_comm_migration_get_terms($vid, $tvid) {
+  $query = db_select(MIGRATION_SOURCE_DATABASE_NAME . '.term_node', 'tn');
+  $query->join(MIGRATION_SOURCE_DATABASE_NAME . '.term_data', 'td', 'tn.tid = td.tid');
+  $query->addField('td', 'tid');
+  $query->condition('tn.vid', $vid, '=');
+  $query->condition('td.vid', $tvid, '=');
+  $query->orderBy('tn.tid', 'ASC');
+  $result = $query->execute()->fetchCol();
+
+  return is_array($result) && !empty($result) ? implode(',', $result) : NULL;
+}
+
+/**
+ * Retrieve the url alias associated with the node from the migration database.
+ */
+function data_comm_migration_get_url_alias($nid) {
+  $result = db_select(MIGRATION_SOURCE_DATABASE_NAME . '.url_alias', 'ua')
+    ->fields('ua', array('dst'))
+    ->condition('ua.src', 'node/' . $nid, '=')
+    ->execute()
+    ->fetchObject();
+
+  return is_object($result) && !empty($result->dst) ? $result->dst : NULL;
+}
+
+/**
+ * Translate between D6 input format id and D7 text format name.
+ */
+function data_comm_migration_get_text_format($format) {
+  $output = '';
+
+  switch ($format) {
+    case 1:
+      $output = 'filtered_html';
+      break;
+    case 2:
+      $output = 'full_html';
+      break;
+    case 3:
+      $output = 'php_code';
+      break;
+    default:
+      $output = 'plain_text';
+  }
+
+  return $output;
+}
+
+/**
+ * Retrieve the image data for page_image field.
+ */
+function data_comm_migration_get_page_image($vid) {
+  $output = array();
+
+  // An advanced feature of the file field handler is that in addition to the
+  // path to the image itself, we can add image properties like ALT text,
+  // encapsulating them as JSON
+  $query = db_select(MIGRATION_SOURCE_DATABASE_NAME . '.content_field_page_image', 'i')
+    ->fields('i', array('field_page_image_data'))
+    ->condition('i.vid', $vid, '=');
+  $query->join(MIGRATION_SOURCE_DATABASE_NAME . '.files', 'f', 'i.field_page_image_fid = f.fid');
+  $query->addField('f', 'filepath');
+  $query->addField('f', 'timestamp');
+  $query->orderBy('i.field_page_image_fid', 'ASC');
+  $result = $query->execute();
+
+  foreach ($result as $row) {
+    $image_data = unserialize($row->field_page_image_data);
+    $image = array(
+      'path' => MIGRATION_SOURCE_FILES_DIRECTORY . '/' . $row->filepath,
+      'alt' => $image_data['alt'],
+      'title' => $image_data['title'],
+      'timestamp' => $row->timestamp,
+    );
+    $output[] = drupal_json_encode($image);
+  }
+
+  return $output;
+}
+
+/**
+ * Retrieve the image data for blog_image field.
+ */
+function data_comm_migration_get_blog_image($vid) {
+  $output = array();
+
+  // An advanced feature of the file field handler is that in addition to the
+  // path to the image itself, we can add image properties like ALT text,
+  // encapsulating them as JSON
+  $query = db_select(MIGRATION_SOURCE_DATABASE_NAME . '.content_field_blog_image', 'i')
+    ->fields('i', array('field_blog_image_data'))
+    ->condition('i.vid', $vid, '=');
+  $query->join(MIGRATION_SOURCE_DATABASE_NAME . '.files', 'f', 'i.field_blog_image_fid = f.fid');
+  $query->addField('f', 'filepath');
+  $query->addField('f', 'timestamp');
+  $query->orderBy('i.field_blog_image_fid', 'ASC');
+  $result = $query->execute();
+
+  foreach ($result as $row) {
+    $image_data = unserialize($row->field_blog_image_data);
+    $image = array(
+      'path' => MIGRATION_SOURCE_FILES_DIRECTORY . '/' . $row->filepath,
+      'alt' => $image_data['alt'],
+      'title' => $image_data['title'],
+      'timestamp' => $row->timestamp,
+    );
+    $output[] = drupal_json_encode($image);
+  }
+
+  return $output;
+}
+
+/**
+ * Retrieve the corresponding D7 group IDs.
+ */
+function data_comm_migration_get_groups($group_nid) {
+  if(!empty($group_nid)) {
+    $source_groups = explode(',', $group_nid);
+
+    $query = db_select('og', 'og')->fields('og', array('gid'));
+
+    $query->leftJoin('migrate_map_datacommnodegroup', 'mmd', 'mmd.destid1 = og.etid');
+    $query->condition('mmd.sourceid1', $source_groups , 'IN');
+
+    $result = $query->execute()->fetchAllKeyed(0,0);
+
+    if(!empty($result)) {
+      return implode(",", $result);
+    }
+  }
+}
+
+/**
+ * Retrieve the file data for file uploads.
+ */
+function data_comm_migration_get_file_uploads($vid) {
+  $output = array();
+
+  // An advanced feature of the file field handler is that in addition to the
+  // path to the image itself, we can add image properties like ALT text,
+  // encapsulating them as JSON
+  $query = db_select(MIGRATION_SOURCE_DATABASE_NAME . '.upload', 'u')
+    ->fields('u', array('fid', 'vid', 'description', 'list'))
+    ->condition('u.vid', $vid, '=');
+  $query->join(MIGRATION_SOURCE_DATABASE_NAME . '.files', 'f', 'u.fid = f.fid');
+  $query->addField('f', 'filepath');
+  $query->addField('f', 'timestamp');
+  $query->orderBy('u.fid', 'ASC');
+  $result = $query->execute();
+
+  foreach ($result as $row) {
+    $file = array(
+      'path' => MIGRATION_SOURCE_FILES_DIRECTORY . '/' . $row->filepath,
+      'description' => $row->description,
+      'display' => $row->list,
+      'timestamp' => $row->timestamp,
+    );
+    $output[] = drupal_json_encode($file);
+  }
+
+  return $output;
+}
