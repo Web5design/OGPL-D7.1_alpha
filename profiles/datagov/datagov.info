@@ -29,5 +29,6 @@ dependencies[] = og_context
 dependencies[] = panelizer
 dependencies[] = spaces
 dependencies[] = strongarm
+dependencies[] = defaultcontent
 
 files[] = datagov.profile
