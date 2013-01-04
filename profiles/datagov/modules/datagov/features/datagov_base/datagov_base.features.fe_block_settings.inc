@@ -18,6 +18,14 @@ function datagov_base_default_fe_block_settings() {
       'delta' => 'blockify-logo',
       'module' => 'blockify',
     ),
+    'superfish-1' => array(
+      'delta' => '1',
+      'module' => 'superfish',
+    ),
+    'system-user-menu' => array(
+      'delta' => 'user-menu',
+      'module' => 'system',
+    ),
   );
 
   // bartik
@@ -35,6 +43,34 @@ function datagov_base_default_fe_block_settings() {
     'pages' => '',
     'title' => '',
     'cache' => 8,
+  );
+
+  $theme['superfish-1'] = array(
+    'module' => 'superfish',
+    'delta' => '1',
+    'theme' => 'bartik',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
+    'custom' => '0',
+    'visibility' => '0',
+    'pages' => '',
+    'title' => '<none>',
+    'cache' => -1,
+  );
+
+  $theme['system-user-menu'] = array(
+    'module' => 'system',
+    'delta' => 'user-menu',
+    'theme' => 'bartik',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
+    'custom' => '0',
+    'visibility' => '0',
+    'pages' => '',
+    'title' => '<none>',
+    'cache' => -1,
   );
 
   $export['theme']['bartik'] = $theme;
@@ -56,6 +92,34 @@ function datagov_base_default_fe_block_settings() {
     'cache' => 8,
   );
 
+  $theme['superfish-1'] = array(
+    'module' => 'superfish',
+    'delta' => '1',
+    'theme' => 'datagov',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
+    'custom' => '0',
+    'visibility' => '0',
+    'pages' => '',
+    'title' => '<none>',
+    'cache' => -1,
+  );
+
+  $theme['system-user-menu'] = array(
+    'module' => 'system',
+    'delta' => 'user-menu',
+    'theme' => 'datagov',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
+    'custom' => '0',
+    'visibility' => '0',
+    'pages' => '',
+    'title' => '<none>',
+    'cache' => -1,
+  );
+
   $export['theme']['datagov'] = $theme;
 
   // seven
@@ -73,6 +137,34 @@ function datagov_base_default_fe_block_settings() {
     'pages' => '',
     'title' => '',
     'cache' => 8,
+  );
+
+  $theme['superfish-1'] = array(
+    'module' => 'superfish',
+    'delta' => '1',
+    'theme' => 'seven',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
+    'custom' => '0',
+    'visibility' => '0',
+    'pages' => '',
+    'title' => '<none>',
+    'cache' => -1,
+  );
+
+  $theme['system-user-menu'] = array(
+    'module' => 'system',
+    'delta' => 'user-menu',
+    'theme' => 'seven',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
+    'custom' => '0',
+    'visibility' => '0',
+    'pages' => '',
+    'title' => '<none>',
+    'cache' => -1,
   );
 
   $export['theme']['seven'] = $theme;
