@@ -162,8 +162,6 @@ function datagov_install() {
   // Don't display date and author information for "Basic page" nodes by default.
   variable_set('node_submitted_page', FALSE);
 
-  //TODO: add workbench configuration here 
-
   // add rdf mapping??
 
   // Allow visitor account creation with administrative approval.
@@ -180,6 +178,7 @@ function datagov_install() {
   $admin_role->weight = 2;
   user_role_save($admin_role);
   user_role_grant_permissions($admin_role->rid, array_keys(module_invoke_all('permission')));
+
   // Set this as the administrator role.
   variable_set('user_admin_role', $admin_role->rid);
 
