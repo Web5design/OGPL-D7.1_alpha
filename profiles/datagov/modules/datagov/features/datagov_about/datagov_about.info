@@ -1,0 +1,9 @@
+name = Datagov About
+description = This is feature creates a basic "about" page and a main menu link
+core = 7.x
+package = Datagov
+version = 7.x-1.0beta1
+project = datagov_about
+dependencies[] = defaultcontent
+features[content][] = about-page
+features[features_api][] = api:1
