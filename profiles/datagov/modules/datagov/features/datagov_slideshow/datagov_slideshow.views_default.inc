@@ -10,7 +10,7 @@
 function datagov_slideshow_views_default_views() {
   $export = array();
 
-  $view = new view;
+  $view = new view();
   $view->name = 'slideshow';
   $view->description = 'A view for the front page slideshow on Data.gov.';
   $view->tag = 'default';
@@ -22,7 +22,7 @@ function datagov_slideshow_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Slideshow';
+  $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
@@ -80,7 +80,6 @@ function datagov_slideshow_views_default_views() {
   $handler->display->display_options['relationships']['nodequeue_rel']['id'] = 'nodequeue_rel';
   $handler->display->display_options['relationships']['nodequeue_rel']['table'] = 'node';
   $handler->display->display_options['relationships']['nodequeue_rel']['field'] = 'nodequeue_rel';
-  $handler->display->display_options['relationships']['nodequeue_rel']['required'] = 0;
   $handler->display->display_options['relationships']['nodequeue_rel']['limit'] = 0;
   $handler->display->display_options['relationships']['nodequeue_rel']['names'] = array(
     'slideshow' => 0,
@@ -91,83 +90,33 @@ function datagov_slideshow_views_default_views() {
   $handler->display->display_options['fields']['field_slide_url']['field'] = 'field_slide_url';
   $handler->display->display_options['fields']['field_slide_url']['label'] = '';
   $handler->display->display_options['fields']['field_slide_url']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['more_link'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['alter']['html'] = 0;
   $handler->display->display_options['fields']['field_slide_url']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_slide_url']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['field_slide_url']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['field_slide_url']['hide_alter_empty'] = 1;
   $handler->display->display_options['fields']['field_slide_url']['click_sort_column'] = 'url';
   $handler->display->display_options['fields']['field_slide_url']['type'] = 'link_url';
-  $handler->display->display_options['fields']['field_slide_url']['field_api_classes'] = 0;
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['title']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['more_link'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['title']['alter']['html'] = 0;
+  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['title']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['title']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['title']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['title']['hide_alter_empty'] = 1;
-  $handler->display->display_options['fields']['title']['link_to_node'] = 0;
+  $handler->display->display_options['fields']['title']['link_to_node'] = FALSE;
   /* Field: Content: Slide Image */
   $handler->display->display_options['fields']['field_slide_image']['id'] = 'field_slide_image';
   $handler->display->display_options['fields']['field_slide_image']['table'] = 'field_data_field_slide_image';
   $handler->display->display_options['fields']['field_slide_image']['field'] = 'field_slide_image';
   $handler->display->display_options['fields']['field_slide_image']['label'] = '';
-  $handler->display->display_options['fields']['field_slide_image']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['make_link'] = 1;
+  $handler->display->display_options['fields']['field_slide_image']['alter']['make_link'] = TRUE;
   $handler->display->display_options['fields']['field_slide_image']['alter']['path'] = '[field_slide_url]';
-  $handler->display->display_options['fields']['field_slide_image']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['trim_whitespace'] = 0;
   $handler->display->display_options['fields']['field_slide_image']['alter']['alt'] = '[title]';
-  $handler->display->display_options['fields']['field_slide_image']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['more_link'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['alter']['html'] = 0;
   $handler->display->display_options['fields']['field_slide_image']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_slide_image']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['field_slide_image']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['field_slide_image']['hide_alter_empty'] = 1;
   $handler->display->display_options['fields']['field_slide_image']['click_sort_column'] = 'fid';
   $handler->display->display_options['fields']['field_slide_image']['settings'] = array(
     'image_style' => 'home_slides',
     'image_link' => '',
   );
-  $handler->display->display_options['fields']['field_slide_image']['field_api_classes'] = 0;
   /* Sort criterion: Nodequeue: Position */
   $handler->display->display_options['sorts']['position']['id'] = 'position';
   $handler->display->display_options['sorts']['position']['table'] = 'nodequeue_nodes';
@@ -207,10 +156,12 @@ function datagov_slideshow_views_default_views() {
 
   /* Display: Block */
   $handler = $view->new_display('block', 'Block', 'block');
+  $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['block_description'] = 'Slideshow';
 
   /* Display: Page */
   $handler = $view->new_display('page', 'Page', 'page_1');
+  $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['path'] = 'slideshow';
   $export['slideshow'] = $view;
 
