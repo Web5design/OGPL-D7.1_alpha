@@ -11,9 +11,9 @@ function datagov_about_content_defaults() {
   $content = array();
 
   $content['about-page'] = (object) array(
-    'exported_path' => 'about',
+    'exported_path' => 'content/about',
     'link' => array(
-      'menu_name' => 'menu-footer-menu',
+      'menu_name' => 'main-menu',
       'link_path' => 'node-name/about-page',
       'router_path' => 'node/%',
       'link_title' => 'About',
@@ -24,7 +24,7 @@ function datagov_about_content_defaults() {
       'has_children' => '0',
       'expanded' => '0',
       'weight' => '19',
-      'identifier' => 'menu-footer-menu:node-name/about-page',
+      'identifier' => 'main-menu:node-name/about-page',
     ),
     'title' => 'About',
     'status' => '1',
