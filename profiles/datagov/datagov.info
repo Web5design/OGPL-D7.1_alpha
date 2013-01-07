@@ -23,6 +23,7 @@ dependencies[] = taxonomy
 dependencies[] = token
 dependencies[] = views
 dependencies[] = views_ui
+dependencies[] = views_content
 dependencies[] = og
 dependencies[] = og_access
 dependencies[] = og_context
