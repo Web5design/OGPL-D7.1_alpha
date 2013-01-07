@@ -1,0 +1,3 @@
+#!/bin/bash
+/Users/dan.olaru/drush/drush si datagov -y
+/Users/dan.olaru/drush/drush fr datagov_base -y
