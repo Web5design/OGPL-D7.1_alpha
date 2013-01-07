@@ -35,6 +35,7 @@ dependencies[] = datagov_base
 dependencies[] = datagov_about
 dependencies[] = datagov_blog
 dependencies[] = datagov_captcha
+dependencies[] = date_popup
 
 files[] = datagov.profile
 
