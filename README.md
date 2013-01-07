@@ -1,4 +1,4 @@
 opendatagov
 ===========
 
-datagov distrivution repository
+datagov distribution repository
