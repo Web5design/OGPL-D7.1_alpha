@@ -546,7 +546,6 @@ function datagov_base_strongarm() {
   $strongarm->value = array(
     0 => 'menu-footer-menu',
     1 => 'main-menu',
-    2 => 'menu-metric-tabs',
   );
   $export['menu_options_page'] = $strongarm;
 
@@ -569,7 +568,8 @@ function datagov_base_strongarm() {
   $strongarm->api_version = 1;
   $strongarm->name = 'node_options_page';
   $strongarm->value = array(
-    0 => 'status',
+    0 => 'moderation',
+    1 => 'revision',
   );
   $export['node_options_page'] = $strongarm;
 
@@ -584,7 +584,7 @@ function datagov_base_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'node_submitted_page';
-  $strongarm->value = FALSE;
+  $strongarm->value = 0;
   $export['node_submitted_page'] = $strongarm;
 
   $strongarm = new stdClass();
