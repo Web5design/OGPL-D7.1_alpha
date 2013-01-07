@@ -137,7 +137,7 @@ function datagov_install() {
   $query->execute();
 
   // add page node type
-  $types = array(
+  /*$types = array(
     array(
       'type' => 'page',
       'name' => st('Basic page'),
@@ -154,13 +154,13 @@ function datagov_install() {
     $type = node_type_set_defaults($type);
     node_type_save($type);
     node_add_body_field($type);
-  }
+  }*/
 
   // do not promote pages to front_page
-  variable_set('node_options_page', array('status'));
+  //variable_set('node_options_page', array('status'));
 
   // Don't display date and author information for "Basic page" nodes by default.
-  variable_set('node_submitted_page', FALSE);
+  //variable_set('node_submitted_page', FALSE);
 
   // add rdf mapping??
 
