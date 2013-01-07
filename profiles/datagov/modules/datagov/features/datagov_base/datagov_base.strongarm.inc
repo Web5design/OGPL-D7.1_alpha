@@ -590,6 +590,17 @@ function datagov_base_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'panelizer_defaults_node_page';
+  $strongarm->value = array(
+    'status' => 1,
+    'default' => 0,
+    'choice' => 1,
+  );
+  $export['panelizer_defaults_node_page'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'site_frontpage';
   $strongarm->value = 'node/3';
   $export['site_frontpage'] = $strongarm;

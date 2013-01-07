@@ -76,6 +76,7 @@ features[variable][] = node_admin_theme
 features[variable][] = node_options_page
 features[variable][] = node_preview_page
 features[variable][] = node_submitted_page
+features[variable][] = panelizer_defaults_node_page
 features[variable][] = site_frontpage
 features[variable][] = site_name
 features[variable][] = superfish_arrow_1
