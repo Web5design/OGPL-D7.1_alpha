@@ -50,8 +50,6 @@ function datagov_blog_user_default_permissions() {
     'name' => 'create blog content',
     'roles' => array(
       0 => 'administrator',
-      1 => 'content_creator',
-      2 => 'content_moderator',
     ),
     'module' => 'node',
   );
@@ -79,8 +77,6 @@ function datagov_blog_user_default_permissions() {
     'name' => 'edit any blog content',
     'roles' => array(
       0 => 'administrator',
-      1 => 'content_creator',
-      2 => 'content_moderator',
     ),
     'module' => 'node',
   );
@@ -90,8 +86,6 @@ function datagov_blog_user_default_permissions() {
     'name' => 'edit own blog content',
     'roles' => array(
       0 => 'administrator',
-      1 => 'content_creator',
-      2 => 'content_moderator',
     ),
     'module' => 'node',
   );
