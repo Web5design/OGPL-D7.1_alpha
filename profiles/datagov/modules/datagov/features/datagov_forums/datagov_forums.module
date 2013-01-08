@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Forums feature.
+ */
+
+include_once 'datagov_forums.features.inc';
