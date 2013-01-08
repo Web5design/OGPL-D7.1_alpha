@@ -10,6 +10,35 @@
 function datagov_blog_content_defaults() {
   $content = array();
 
+  $content['blogs-home-page'] = (object) array(
+    'exported_path' => 'content/blogs',
+    'link' => array(
+      'menu_name' => 'main-menu',
+      'link_path' => 'node-name/blogs-home-page',
+      'router_path' => 'node/%',
+      'link_title' => 'Blogs',
+      'options' => array(),
+      'module' => 'menu',
+      'hidden' => '0',
+      'external' => '0',
+      'has_children' => '0',
+      'expanded' => '0',
+      'weight' => '10',
+      'identifier' => 'main-menu:node-name/blogs-home-page',
+    ),
+    'title' => 'Blogs',
+    'status' => '1',
+    'promote' => '0',
+    'sticky' => '0',
+    'type' => 'page',
+    'language' => 'und',
+    'created' => '1357688770',
+    'comment' => '1',
+    'translate' => '0',
+    'machine_name' => 'blogs-home-page',
+    'body' => array(),
+  );
+
   $content['demo-blog-post'] = (object) array(
     'exported_path' => 'blog/demo-blog',
     'title' => 'Demo Blog',
