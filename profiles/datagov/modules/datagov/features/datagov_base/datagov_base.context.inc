@@ -31,12 +31,6 @@ function datagov_base_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'boxes-usaflag_info' => array(
-          'module' => 'boxes',
-          'delta' => 'usaflag_info',
-          'region' => 'header_top',
-          'weight' => '-10',
-        ),
         'addthis-addthis_block' => array(
           'module' => 'addthis',
           'delta' => 'addthis_block',
@@ -53,19 +47,19 @@ function datagov_base_context_default_contexts() {
           'module' => 'blockify',
           'delta' => 'blockify-logo',
           'region' => 'header',
-          'weight' => '-69',
+          'weight' => '-20',
         ),
         'system-user-menu' => array(
           'module' => 'system',
           'delta' => 'user-menu',
           'region' => 'header',
-          'weight' => '-68',
+          'weight' => '-20',
         ),
         'search-form' => array(
           'module' => 'search',
           'delta' => 'form',
           'region' => 'header',
-          'weight' => '-67',
+          'weight' => '-20',
         ),
         'superfish-1' => array(
           'module' => 'superfish',
@@ -73,17 +67,17 @@ function datagov_base_context_default_contexts() {
           'region' => 'main_menu',
           'weight' => '-10',
         ),
+        'og_menu-og_single_menu_block' => array(
+          'module' => 'og_menu',
+          'delta' => 'og_single_menu_block',
+          'region' => 'content',
+          'weight' => '-10',
+        ),
         'menu-menu-footer-menu' => array(
           'module' => 'menu',
           'delta' => 'menu-footer-menu',
           'region' => 'footer',
           'weight' => '-10',
-        ),
-        'boxes-datagov_footer_logo' => array(
-          'module' => 'boxes',
-          'delta' => 'datagov_footer_logo',
-          'region' => 'footer',
-          'weight' => '-9',
         ),
       ),
     ),

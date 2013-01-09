@@ -19,6 +19,7 @@ dependencies[] = fe_nodequeue
 dependencies[] = features
 dependencies[] = file
 dependencies[] = og
+dependencies[] = og_menu
 dependencies[] = page_manager
 dependencies[] = panels
 dependencies[] = panels_node
