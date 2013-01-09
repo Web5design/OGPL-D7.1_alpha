@@ -11,7 +11,7 @@ function datagov_about_content_defaults() {
   $content = array();
 
   $content['about-page'] = (object) array(
-    'exported_path' => 'content/about',
+    'exported_path' => 'about',
     'link' => array(
       'menu_name' => 'main-menu',
       'link_path' => 'node-name/about-page',

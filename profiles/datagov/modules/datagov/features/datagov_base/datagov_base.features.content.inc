@@ -11,7 +11,7 @@ function datagov_base_content_defaults() {
   $content = array();
 
   $content['home-page'] = (object) array(
-    'exported_path' => 'content/home',
+    'exported_path' => 'home',
     'link' => array(
       'menu_name' => 'main-menu',
       'link_path' => 'node-name/home-page',
