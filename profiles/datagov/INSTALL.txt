@@ -5,8 +5,9 @@ There are two ways to install the Open Datagov distribution:
   c) Set up a virtual server for it (i.e. through MAMP)
   d) Go to /install.php and select "Datagov Distro" installation profile
   e) Follow the instructions
-  f) *Ignore the warning that is going to appear on the screen for now 
-  g) Enjoy!
+  f) Enable desired features
+  g) *Ignore the warning that is going to appear on the screen for now 
+  h) Enjoy!
 
 
 2-
