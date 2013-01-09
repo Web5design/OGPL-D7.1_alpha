@@ -18,7 +18,7 @@ function data_gov_communities_configuration_default_page_manager_pages() {
   $page->path = 'communities';
   $page->access = array();
   $page->menu = array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Communities',
     'name' => 'main-menu',
     'weight' => '30',
