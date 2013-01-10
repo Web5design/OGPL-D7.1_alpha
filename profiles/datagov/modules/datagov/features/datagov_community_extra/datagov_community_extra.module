@@ -20,6 +20,5 @@ function datagov_community_extra_modules_enabled($modules) {
     ->execute();
 
   // set main-menu block title to none
-
   // set user-menu block title to noe
 }
