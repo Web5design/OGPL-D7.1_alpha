@@ -35,6 +35,7 @@ dependencies[] = datagov_base
 dependencies[] = datagov_about
 dependencies[] = datagov_blog
 dependencies[] = datagov_captcha
+dependencies[] = data_gov_communities_configuration
 dependencies[] = datagov_community_extra
 dependencies[] = datagov_event
 dependencies[] = datagov_developer_apps_gallery
