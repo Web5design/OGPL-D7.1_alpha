@@ -30,7 +30,6 @@ dependencies[] = og_context
 dependencies[] = panelizer
 dependencies[] = spaces
 dependencies[] = strongarm
-dependencies[] = features_override
 dependencies[] = datagov_base
 dependencies[] = datagov_about
 dependencies[] = datagov_blog
