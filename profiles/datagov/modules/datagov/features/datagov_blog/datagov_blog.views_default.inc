@@ -65,7 +65,7 @@ function datagov_blog_views_default_views() {
   $handler->display->display_options['filters']['status']['table'] = 'node';
   $handler->display->display_options['filters']['status']['field'] = 'status';
   $handler->display->display_options['filters']['status']['value'] = '1';
-  /* Filter criterion: Broken/missing handler */
+  /* Filter criterion: OG Membership: Custom Group ID filter */
   $handler->display->display_options['filters']['gid']['id'] = 'gid';
   $handler->display->display_options['filters']['gid']['table'] = 'og_membership';
   $handler->display->display_options['filters']['gid']['field'] = 'gid';
@@ -506,7 +506,7 @@ function datagov_blog_views_default_views() {
     28 => 0,
     29 => 0,
   );
-  /* Filter criterion: Broken/missing handler */
+  /* Filter criterion: OG Membership: Custom Group ID filter */
   $handler->display->display_options['filters']['gid']['id'] = 'gid';
   $handler->display->display_options['filters']['gid']['table'] = 'og_membership';
   $handler->display->display_options['filters']['gid']['field'] = 'gid';
@@ -697,7 +697,7 @@ function datagov_blog_views_default_views() {
   $handler->display->display_options['filters']['date_filter']['date_fields'] = array(
     'node.created' => 'node.created',
   );
-  /* Filter criterion: Broken/missing handler */
+  /* Filter criterion: OG Membership: Custom Group ID filter */
   $handler->display->display_options['filters']['gid']['id'] = 'gid';
   $handler->display->display_options['filters']['gid']['table'] = 'og_membership';
   $handler->display->display_options['filters']['gid']['field'] = 'gid';
