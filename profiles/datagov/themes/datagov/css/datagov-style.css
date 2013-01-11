@@ -2693,3 +2693,46 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     text-decoration: none;
     font-weight: normal;
 }
+
+.block-addthis {
+    border-left: 1px solid #506D8F;
+    display: block;
+    height: 18px !important;
+    margin: 0 !important;
+    padding: 2px 0 0 !important;
+    width: 100px !important;
+    float: right;
+}
+#block-boxes-current_date_preheader {
+    border-left: 1px solid #506D8F;
+    color: #FFFFFF !important;
+    display: block;
+    height: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center;
+    width: 169px;
+    float: right;
+}
+
+#block-boxes-current_date_preheader p{margin-top:0;}
+
+#logo, #block-blockify-blockify-logo {
+    float: left;
+    margin-bottom: 0;
+    width: 450px;
+}
+
+#block-system-user-menu {
+    clear: right;
+    float: right;
+    font-weight: bold;
+    margin-bottom: 0;
+    width: 200px;
+}
+#block-search-form {
+    clear: left;
+    float: right;
+    margin-top: -28px;
+    width: 350px;
+}
