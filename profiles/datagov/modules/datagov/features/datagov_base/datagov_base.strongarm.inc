@@ -543,7 +543,7 @@ function datagov_base_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'file_temporary_path';
-  $strongarm->value = '/Applications/MAMP/tmp/php';
+  $strongarm->value = '/tmp';
   $export['file_temporary_path'] = $strongarm;
 
   $strongarm = new stdClass();
