@@ -43,23 +43,23 @@ function datagov_base_context_default_contexts() {
           'region' => 'header_top',
           'weight' => '-8',
         ),
-        'blockify-blockify-logo' => array(
-          'module' => 'blockify',
-          'delta' => 'blockify-logo',
+        'search-form' => array(
+          'module' => 'search',
+          'delta' => 'form',
           'region' => 'header',
-          'weight' => '-20',
+          'weight' => '-25',
         ),
         'system-user-menu' => array(
           'module' => 'system',
           'delta' => 'user-menu',
           'region' => 'header',
-          'weight' => '-20',
+          'weight' => '-26',
         ),
-        'search-form' => array(
-          'module' => 'search',
-          'delta' => 'form',
+        'blockify-blockify-logo' => array(
+          'module' => 'blockify',
+          'delta' => 'blockify-logo',
           'region' => 'header',
-          'weight' => '-20',
+          'weight' => '-27',
         ),
         'superfish-1' => array(
           'module' => 'superfish',
