@@ -49,7 +49,7 @@ function datagov_base_fe_nodequeue_export_fields() {
 
   // Exported nodequeues: slideshow
   $nodequeues['slideshow'] = array(
-    'qid' => '1',
+    'qid' => '2',
     'name' => 'slideshow',
     'title' => 'Slideshow',
     'subqueue_title' => '',

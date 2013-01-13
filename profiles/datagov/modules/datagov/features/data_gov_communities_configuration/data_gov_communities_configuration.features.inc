@@ -26,6 +26,39 @@ function data_gov_communities_configuration_views_api() {
 }
 
 /**
+ * Implements hook_fe_nodequeue_export_fields().
+ */
+function data_gov_communities_configuration_fe_nodequeue_export_fields() {
+  $nodequeues = array();
+
+  // Exported nodequeues: community_hub_slides
+  $nodequeues['community_hub_slides'] = array(
+    'qid' => '1',
+    'name' => 'community_hub_slides',
+    'title' => 'Community Hub Slides',
+    'subqueue_title' => '',
+    'size' => '0',
+    'link' => 'Add to Queue',
+    'link_remove' => '',
+    'owner' => 'nodequeue',
+    'show_in_ui' => '1',
+    'show_in_tab' => '1',
+    'show_in_links' => '1',
+    'reference' => '0',
+    'reverse' => '0',
+    'i18n' => '0',
+    'subqueues' => '1',
+    'types' => array(
+      0 => 'slide',
+    ),
+    'roles' => array(),
+    'count' => 0,
+  );
+
+  return $nodequeues;
+}
+
+/**
  * Implements hook_node_info().
  */
 function data_gov_communities_configuration_node_info() {
