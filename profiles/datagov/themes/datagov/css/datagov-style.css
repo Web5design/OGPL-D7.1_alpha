@@ -1500,7 +1500,7 @@ div.usasearch-results-wrap div.search-notice {
 }
 .communities-home-center {
     width: 100%;
-    background: url("/sites/all/themes/datagov/images/community-hub-featured-texture.png");
+    background: url("/profiles/datagov/themes/datagov/images/community-hub-featured-texture.png");
 }
     .communities-home-center .toggle-wrapper.lowered-toggle { top: -140px; }
     .communities-home-center .toggle-wrapper {
