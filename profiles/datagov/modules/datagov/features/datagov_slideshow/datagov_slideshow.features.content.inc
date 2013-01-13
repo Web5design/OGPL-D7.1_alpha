@@ -14,7 +14,7 @@ function datagov_slideshow_content_defaults() {
     'exported_path' => 'content/demo-slide-1',
     'default_nodequeue' => array(
       0 => array(
-        'queue' => '1',
+        'queue' => '2',
       ),
     ),
     'title' => 'Demo Slide 1',
@@ -50,7 +50,7 @@ function datagov_slideshow_content_defaults() {
     'exported_path' => 'content/demo-slide-2',
     'default_nodequeue' => array(
       0 => array(
-        'queue' => '1',
+        'queue' => '2',
       ),
     ),
     'title' => 'Demo Slide 2',
