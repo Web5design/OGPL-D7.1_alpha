@@ -31,6 +31,7 @@ dependencies[] = panelizer
 dependencies[] = spaces
 dependencies[] = strongarm
 dependencies[] = php
+dependencies[] = custom_breadcrumbs
 dependencies[] = datagov_base
 dependencies[] = datagov_about
 dependencies[] = datagov_blog
