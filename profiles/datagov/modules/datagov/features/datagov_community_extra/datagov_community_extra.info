@@ -5,5 +5,4 @@ package = Datagov
 php = 5.2.4
 version = 7.x-1.0-beta1
 project = datagov_community_extra
-dependencies[] = data_gov_communities_configuration
 features[features_api][] = api:1
