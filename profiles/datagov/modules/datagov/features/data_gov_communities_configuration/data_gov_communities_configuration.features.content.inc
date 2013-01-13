@@ -124,6 +124,7 @@ function data_gov_communities_configuration_content_defaults() {
       'has_children' => '0',
       'expanded' => '0',
       'weight' => '0',
+      'parent_path' => 'communities',
       'identifier' => 'main-menu:node-name/demo-community-page',
     ),
     'title' => 'Demo Community',
