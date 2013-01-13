@@ -32,6 +32,7 @@ dependencies[] = spaces
 dependencies[] = strongarm
 dependencies[] = php
 dependencies[] = custom_breadcrumbs
+dependencies[] = features_override
 dependencies[] = datagov_base
 dependencies[] = datagov_about
 dependencies[] = datagov_blog
