@@ -1,3 +1,4 @@
 #!/bin/bash
 /Users/dan.olaru/drush/drush si datagov -y
-/Users/dan.olaru/drush/drush fra -y
+/Users/dan.olaru/drush/drush fr datagov_base -y
+/Users/dan.olaru/drush/drush fr data_gov_communities_configuration -y
