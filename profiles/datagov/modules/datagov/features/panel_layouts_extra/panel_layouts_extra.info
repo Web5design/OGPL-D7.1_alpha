@@ -1,0 +1,11 @@
+name = Datagov panel layouts extra
+description = Additional panel layouts
+core = 7.x
+package = Datagov
+php = 5.2.4
+version = 7.x-1.0-beta1
+project = panel_layouts_extra
+dependencies[] = ctools
+dependencies[] = panels
+features[ctools][] = panels:layouts:1
+features[features_api][] = api:1
