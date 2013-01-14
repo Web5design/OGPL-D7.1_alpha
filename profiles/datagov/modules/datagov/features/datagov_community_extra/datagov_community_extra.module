@@ -7,7 +7,7 @@ function datagov_community_extra_modules_enabled($modules) {
   if (!in_array('data_gov_communities_configuration', $modules)) return;
 
   // set comCatMenu css class for block_og_menu
-  /*$result = db_insert('fusion_apply_skins')
+  $result = db_insert('fusion_apply_skins')
     ->fields(array(
       'sid' => 115,
       'theme' => 'datagov',
@@ -17,7 +17,7 @@ function datagov_community_extra_modules_enabled($modules) {
       'options' => 'a:1:{i:0;s:10:"comCatMenu";}',
       'status' => '1'
     ))
-    ->execute();*/
+    ->execute();
 
   // set main-menu block title to none
   // set user-menu block title to noe

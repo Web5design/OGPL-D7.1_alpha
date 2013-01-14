@@ -2736,3 +2736,9 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     margin-top: -28px;
     width: 350px;
 }
+
+.communities-hub {
+  float: left;
+  margin: 0;
+  width: 100%!important;
+}
