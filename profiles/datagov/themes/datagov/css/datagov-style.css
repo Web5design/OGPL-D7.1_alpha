@@ -2742,3 +2742,6 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
   margin: 0;
   width: 100%!important;
 }
+#pid-communities .main h1.gutter {
+    display: none;
+}
