@@ -1,5 +1,5 @@
 #!/bin/bash
-/Users/dan.olaru/drush/drush si datagov -y
-/Users/dan.olaru/drush/drush fr datagov_base -y
-/Users/dan.olaru/drush/drush fr data_gov_communities_configuration -y
-/Users/dan.olaru/drush/drush fr data_gov_communities_configuration -y
+/usr/bin/drush/drush si datagov -y
+/usr/bin/drush/drush fr datagov_base -y
+/usr/bin/drush/drush fr data_gov_communities_configuration -y
+/usr/bin/drush/drush fr data_gov_communities_configuration -y
