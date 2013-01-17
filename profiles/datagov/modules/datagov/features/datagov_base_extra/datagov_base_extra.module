@@ -1,0 +1,26 @@
+<?php
+/**
+ * Implement hook_modules_enabled().
+ * Typically, defaultcontent.module waits for cron to create nodes.
+ * This forces node creation immediately, then sets front page URL.
+ */
+function datagov_base_extra_modules_enabled($modules) {   
+  // quit if datagov_base hasn't been enabled
+  if (!in_array('datagov_base', $modules)) return;
+
+  // insert login menu link to user-menu menu
+  $result = db_insert('menu_links')
+    ->fields(array(
+      'menu_name' => 'user-menu',
+      'mlid' => '16',
+      'plid' => '3',
+      'link_path' => 'user/login',
+      'router_path' => 'user/login',
+      'link_title' => 'Log in',
+      'hidden' => '-1',
+      'depth' => '2',
+      'p1' => '3',
+      'p2' => '16'
+    ))
+    ->execute();
+}

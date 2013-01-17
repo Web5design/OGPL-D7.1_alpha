@@ -5,6 +5,7 @@ package = Datagov
 php = 5.2.4
 version = 7.x-1.0beta3
 project = datagov_base
+dependencies[] = datagov_base_extra
 dependencies[] = addthis
 dependencies[] = addthis_displays
 dependencies[] = blockify
