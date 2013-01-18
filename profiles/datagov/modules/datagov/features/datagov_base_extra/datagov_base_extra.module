@@ -8,20 +8,6 @@ function datagov_base_extra_modules_enabled($modules) {
   // quit if datagov_base hasn't been enabled
   if (!in_array('datagov_base', $modules)) return;
 
-  /*$result = db_insert('menu_links')
-    ->fields(array(
-      'menu_name' => 'user-menu',
-      'plid' => '0',
-      'link_path' => 'user/login',
-      'router_path' => 'user/login',
-      'link_title' => 'Log in',
-      'module' => 'menu',
-      'hidden' => '0',
-      'depth' => '1',
-      'customized' => '1',
-    ))
-    ->execute();*/
-
   // insert log in menu link into user-menu
   $item = array(
     'menu_name' => 'user-menu',
@@ -31,4 +17,42 @@ function datagov_base_extra_modules_enabled($modules) {
     'link_title' => 'Log in',
   );
   menu_link_save($item);
+
+  // set user-menu block title to <none>
+  db_merge('block')
+    ->key(array(
+      'theme' => 'datagov',
+      'module' => 'system',
+      'delta' => 'user-menu',
+    ))
+    ->fields(array(
+      'status' => 0,
+      'weight' => 0,
+      'region' => -1,
+      'custom' => 0,
+      'visibility' => 0,
+      'pages' => '',
+      'title' => '<none>',
+      'cache' => -1,
+    ))
+    ->execute();
+
+  // set main-menu block title to <none>
+  db_merge('block')
+    ->key(array(
+      'theme' => 'datagov',
+      'module' => 'superfish',
+      'delta' => '1',
+    ))
+    ->fields(array(
+      'status' => 0,
+      'weight' => 0,
+      'region' => -1,
+      'custom' => 0,
+      'visibility' => 0,
+      'pages' => '',
+      'title' => '<none>',
+      'cache' => -1,
+    ))
+    ->execute();
 }
