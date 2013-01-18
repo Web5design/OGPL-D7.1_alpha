@@ -8,19 +8,27 @@ function datagov_base_extra_modules_enabled($modules) {
   // quit if datagov_base hasn't been enabled
   if (!in_array('datagov_base', $modules)) return;
 
-  // insert login menu link to user-menu menu
-  $result = db_insert('menu_links')
+  /*$result = db_insert('menu_links')
     ->fields(array(
       'menu_name' => 'user-menu',
-      'mlid' => '16',
-      'plid' => '3',
+      'plid' => '0',
       'link_path' => 'user/login',
       'router_path' => 'user/login',
       'link_title' => 'Log in',
-      'hidden' => '-1',
-      'depth' => '2',
-      'p1' => '3',
-      'p2' => '16'
+      'module' => 'menu',
+      'hidden' => '0',
+      'depth' => '1',
+      'customized' => '1',
     ))
-    ->execute();
+    ->execute();*/
+
+  // insert log in menu link into user-menu
+  $item = array(
+    'menu_name' => 'user-menu',
+    'module' => 'menu',
+    'router_path' => 'user/login',
+    'link_path' => 'user/login',
+    'link_title' => 'Log in',
+  );
+  menu_link_save($item);
 }
