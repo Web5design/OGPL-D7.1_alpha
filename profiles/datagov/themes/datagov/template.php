@@ -28,7 +28,7 @@ function datagov_form_alter(&$form, &$form_state, $form_id) {
   $form['search_block_form']['#title'] = t('Search'); // Change the text on the label element
   $form['search_block_form']['#title_display'] = 'invisible'; // Toggle label visibilty
   $form['search_block_form']['#size'] = 40;  // define size of the textfield
-  $form['search_block_form']['#default_value'] = t('Search ') . $placeholder; // Set a default value for the textfield
+  $form['search_block_form']['#default_value'] = t('Search '); // Set a default value for the textfield
 
   // Add extra attributes to the text box
   $form['search_block_form']['#attributes']['onblur'] = "if (this.value == '') {this.value = 'Search " . $placeholder . ";}";
