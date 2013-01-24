@@ -16,7 +16,6 @@ dependencies[] = php
 dependencies[] = text_resize
 dependencies[] = token
 dependencies[] = token_filter
-features[box][] = current_date_preheader
 features[box][] = datagov_footer_logo
 features[box][] = developers_forums
 features[box][] = developers_intro
