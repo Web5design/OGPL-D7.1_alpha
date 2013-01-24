@@ -83,6 +83,7 @@ features[variable][] = show_preview_changes_community
 features[variable][] = workbench_moderation_default_state_community
 features[variable][] = xmlsitemap_settings_node_community
 features[views_view][] = community_activity_feed_content
+features[views_view][] = community_featured_content
 features[views_view][] = community_hub_slideshow
 features[views_view][] = community_listing
 features[views_view][] = community_slideshow
