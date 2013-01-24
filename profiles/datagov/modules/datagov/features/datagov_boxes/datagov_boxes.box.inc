@@ -112,7 +112,7 @@ function datagov_boxes_default_box() {
   $box->description = 'Home Feature - Data and Apps';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="#"><img style="border: 0;" src="/sites/default/files/images/home-feature-data-apps.png" alt="An example of a citizen-developed application" border="0" height="150" width="280"></a>',
+      'value' => '<div class="centered"><a href="#"><img style="border: 0;" src="/sites/default/files/images/home-feature-data-apps.png" alt="An example of a citizen-developed application" border="0" height="150" width="280"></a></div><p>This is a place holder for data and apps</p>',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
