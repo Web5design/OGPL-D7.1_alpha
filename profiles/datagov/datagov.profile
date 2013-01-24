@@ -57,6 +57,6 @@ function datagov_install_finished(&$install_state) {
 function datagov_profile_tasks() {
   // Revert all features in order to solve a wierd bug where features overrides some values
   // after enabling some features
-  features_rebuild();
-  features_revert();
+  //features_rebuild();
+  //features_revert();
 }

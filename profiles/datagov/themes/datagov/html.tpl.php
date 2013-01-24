@@ -91,7 +91,5 @@
   <?php print $page_top; ?>
   <?php print $page; ?>
   <?php print $page_bottom; ?>
-
-<?php if (strtolower($_SERVER['SERVER_NAME']) == 'www.data.gov' || strtolower($_SERVER['SERVER_NAME']) == 'communities-data-gov.data.gov'): ?>
 </body>
 </html>
