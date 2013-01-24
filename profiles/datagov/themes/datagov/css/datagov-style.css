@@ -2717,12 +2717,13 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
 
 #block-boxes-current_date_preheader p{margin-top:0;}
 
-#logo, #block-blockify-blockify-logo {
+ #block-blockify-blockify-logo {
     float: left;
     margin-bottom: 0;
-    width: 450px;
+    width: 650px;
 }
-
+#block-blockify-blockify-logo .content{width:215px;}
+#block-blockify-blockify-logo .content, #block-blockify-blockify-logo .community-label{float:left;}
 #block-system-user-menu {
     clear: right;
     float: right;
