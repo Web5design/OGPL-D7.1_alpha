@@ -13,22 +13,6 @@ function datagov_boxes_default_box() {
   $box = new stdClass();
   $box->disabled = FALSE; /* Edit this to true to make a default box disabled initially */
   $box->api_version = 1;
-  $box->delta = 'current_date_preheader';
-  $box->plugin_key = 'simple';
-  $box->title = '<none>';
-  $box->description = 'Change Text Size - HowTo.gov';
-  $box->options = array(
-    'body' => array(
-      'value' => '<p id="datagov-current-date"><a style="color: #ffffff !important; text-decoration: none;" href="http://www.howto.gov/site-policies/change-text">Change Text Size</a></p>',
-      'format' => 'full_html',
-    ),
-    'additional_classes' => '',
-  );
-  $export['current_date_preheader'] = $box;
-
-  $box = new stdClass();
-  $box->disabled = FALSE; /* Edit this to true to make a default box disabled initially */
-  $box->api_version = 1;
   $box->delta = 'datagov_footer_logo';
   $box->plugin_key = 'simple';
   $box->title = '<none>';
@@ -112,7 +96,7 @@ function datagov_boxes_default_box() {
   $box->description = 'Home Feature - Communities';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="/communities"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-communities.png" alt="Data.gov Communities" border="0" height="150" width="280"></a></div><p>Come explore, discuss, meet others in the same field, and develop the data and apps in the community that you care about. Join in the discussions by <a href="/communities">going to communities</a>, some of which are listed below, that interest you.</p><div class="centered"><a href="/community/education"><img src="http://www.data.gov/communities/sites/all/files/images/home-community-education.png" alt="Education" height="30" width="145"></a> <a href="/community/energy"><img src="http://www.data.gov/communities/sites/all/files/images/home-community-energy.png" alt="Energy" height="30" width="145"></a> <a href="/community/business"><img src="http://www.data.gov/communities/sites/all/files/images/home-community-businessusa.png" alt="Health" height="30" width="145"></a> <a href="/community/manufacturing"><img src="http://www.data.gov/communities/sites/all/files/images/home-community-manufacturing.png" alt="Manufacturing" height="30" width="145"></a> <a href="/community/ocean"><img src="http://www.data.gov/communities/sites/all/files/images/home-community-ocean.png" alt="Ocean" height="30" width="145"></a> <a href="/community/safety"><img src="http://www.data.gov/communities/sites/all/files/images/home-community-safety.png" alt="Safety" height="30" width="145"></a></div>',
+      'value' => '<div class="centered"><a href="/communities"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-communities.png" alt="OGPL7 Communities" border="0" height="150" width="280"></a></div><p>Come explore, discuss, meet others in the same field, and develop the data and apps in the community that you care about. Join in the discussions by <a href="/communities">going to communities</a>, some of which are listed below, that interest you.</p>',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
@@ -124,11 +108,11 @@ function datagov_boxes_default_box() {
   $box->api_version = 1;
   $box->delta = 'home_data_apps';
   $box->plugin_key = 'simple';
-  $box->title = '<a href="/metric">Data and Apps</a>';
+  $box->title = '<a href="#">Data and Apps</a>';
   $box->description = 'Home Feature - Data and Apps';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="/metric"><img style="border: 0;" src="/sites/default/files/images/home-feature-data-apps.png" alt="An example of a citizen-developed application" border="0" height="150" width="280"></a></div><ul class="datagov-home-ul hometext"><li>378,529 <a href="http://explore.data.gov/catalog/raw/">raw</a> and <a href="http://geo.data.gov/geoportal/">geospatial</a> datasets</li><li>1,264 government <a href="https://explore.data.gov/catalog/apps/">apps</a></li><li>236 citizen-developed <a href="/developers/showcase">apps</a></li><li>103 <a href="http://apps.usa.gov/">mobile apps</a></li><li>180 <a href="/metric">agencies and subagencies</a></li><li><a href="https://explore.data.gov/nominate">Suggest a dataset or app!</a></li><li><a href="/announcements/introducing-datagov-next-generation">2011 Next Generation Data.gov</a> is interactive, explorable, and socially.</li></ul>',
+      'value' => '<div class="centered"><a href="#"><img style="border: 0;" src="/sites/default/files/images/home-feature-data-apps.png" alt="An example of a citizen-developed application" border="0" height="150" width="280"></a>',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
@@ -192,7 +176,7 @@ function datagov_boxes_default_box() {
   $box->description = 'Home Feature - Open Government';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="opengovplatform"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-opengov.png" alt="What\'s New at Data.gov" border="0" height="150" width="280"></a></div><p>First open source code released for the <a href="/opengovplatform">Open Government Platform</a> delivered by the governments of India and the U.S. <a href="/opengovplatform">Find out more</a> and then <a href="https://github.com/opengovplatform/opengovplatform">download the code</a>.</p><p>The 2012 International Open Government Data Conference will be held July 10-12 at the World Bank in Washington DC. We hope to see you <a href="http://www.data.gov/communities/conference">there</a>.</p><p>What’s coming up on Data.gov? Check out <a href="/developer/community/developer/blogs">our blog</a>.</p>',
+      'value' => '<div class="centered"><a href="opengovplatform"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-opengov.png" alt="What\'s New at Data.gov" border="0" height="150" width="280"></a></div><p>First open source code released for the Open Government Platform delivered by the governments of India and the U.S.',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
