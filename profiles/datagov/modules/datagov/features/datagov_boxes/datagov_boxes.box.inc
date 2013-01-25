@@ -172,11 +172,11 @@ function datagov_boxes_default_box() {
   $box->api_version = 1;
   $box->delta = 'home_open_government';
   $box->plugin_key = 'simple';
-  $box->title = '<a href="/opengovplatform">Open Government</a>';
+  $box->title = '<a href="#">Open Government</a>';
   $box->description = 'Home Feature - Open Government';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="opengovplatform"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-opengov.png" alt="What\'s New at Data.gov" border="0" height="150" width="280"></a></div><p>First open source code released for the Open Government Platform delivered by the governments of India and the U.S.',
+      'value' => '<div class="centered"><a href="#"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-opengov.png" alt="What\'s New at Data.gov" border="0" height="150" width="280"></a></div><p>First open source code released for the Open Government Platform delivered by the governments of India and the U.S.',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
