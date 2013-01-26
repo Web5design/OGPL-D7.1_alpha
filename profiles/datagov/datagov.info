@@ -35,7 +35,6 @@ dependencies[] = strongarm
 dependencies[] = php
 dependencies[] = webform
 dependencies[] = custom_breadcrumbs
-dependencies[] = features_override
 dependencies[] = datagov_base
 dependencies[] = datagov_about
 dependencies[] = datagov_blog
