@@ -49,6 +49,7 @@ dependencies[] = datagov_developer_apps_gallery
 dependencies[] = datagov_content_moderation
 dependencies[] = datagov_challenge 
 dependencies[] = datagov_forums
+dependencies[] = datagov_content_notification
 dependencies[] = datagov_boxes
 dependencies[] = datagov_tool
 dependencies[] = datagov_faq
