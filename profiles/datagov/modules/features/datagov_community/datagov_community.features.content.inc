@@ -50,67 +50,6 @@ function datagov_community_content_defaults() {
     ),
   );
 
-  $content['demo-challange'] = (object) array(
-    'title' => 'Demo Challange',
-    'status' => '1',
-    'promote' => '0',
-    'sticky' => '0',
-    'type' => 'challenge',
-    'language' => 'und',
-    'created' => '1357963999',
-    'comment' => '1',
-    'translate' => '0',
-    'machine_name' => 'demo-challange',
-    'body' => array(
-      'und' => array(
-        0 => array(
-          'value' => 'This is a demo challange',
-          'summary' => '',
-          'format' => 'filtered_html',
-          'safe_value' => '<p>This is a demo challange</p>
-',
-          'safe_summary' => '',
-        ),
-      ),
-    ),
-    'field_challenge_award' => array(
-      'und' => array(
-        0 => array(
-          'value' => '$1',
-          'format' => NULL,
-          'safe_value' => '$1',
-        ),
-      ),
-    ),
-    'field_challenge_start_date' => array(
-      'und' => array(
-        0 => array(
-          'value' => '2014-01-12T00:00:00',
-          'value2' => '2014-01-12T00:00:00',
-          'timezone' => 'Europe/Berlin',
-          'timezone_db' => 'Europe/Berlin',
-          'date_type' => 'date',
-        ),
-      ),
-    ),
-    'field_challenge_url' => array(
-      'und' => array(
-        0 => array(
-          'url' => 'http://www.demo-challange.data.gov',
-          'title' => 'Demo Challange',
-          'attributes' => array(),
-        ),
-      ),
-    ),
-    'field_winner_announced' => array(
-      'und' => array(
-        0 => array(
-          'value' => '0',
-        ),
-      ),
-    ),
-  );
-
   $content['demo-community-page'] = (object) array(
     'link' => array(
       'menu_name' => 'main-menu',
@@ -140,80 +79,7 @@ function datagov_community_content_defaults() {
     'body' => array(),
   );
 
-  $content['demo-event'] = (object) array(
-    'exported_path' => 'event/demo-event',
-    'title' => 'Demo Event',
-    'status' => '1',
-    'promote' => '1',
-    'sticky' => '0',
-    'type' => 'event',
-    'language' => 'und',
-    'created' => '1357963771',
-    'comment' => '2',
-    'translate' => '0',
-    'machine_name' => 'demo-event',
-    'body' => array(
-      'und' => array(
-        0 => array(
-          'value' => 'This is a demo event',
-          'summary' => '',
-          'format' => 'filtered_html',
-          'safe_value' => '<p>This is a demo event</p>
-',
-          'safe_summary' => '',
-        ),
-      ),
-    ),
-    'field_date' => array(
-      'und' => array(
-        0 => array(
-          'value' => '1389499800',
-          'value2' => '1389499800',
-          'timezone' => 'Europe/Berlin',
-          'timezone_db' => 'UTC',
-          'date_type' => 'datestamp',
-        ),
-      ),
-    ),
-    'field_location' => array(
-      'und' => array(
-        0 => array(
-          'country' => 'US',
-          'administrative_area' => 'DC',
-          'sub_administrative_area' => NULL,
-          'locality' => 'Washington DC',
-          'dependent_locality' => NULL,
-          'postal_code' => '21202',
-          'thoroughfare' => '',
-          'premise' => '',
-          'sub_premise' => NULL,
-          'organisation_name' => NULL,
-          'name_line' => NULL,
-          'first_name' => NULL,
-          'last_name' => NULL,
-          'data' => NULL,
-        ),
-        1 => array(
-          'country' => 'AF',
-          'administrative_area' => NULL,
-          'sub_administrative_area' => NULL,
-          'locality' => '',
-          'dependent_locality' => NULL,
-          'postal_code' => NULL,
-          'thoroughfare' => '',
-          'premise' => '',
-          'sub_premise' => NULL,
-          'organisation_name' => NULL,
-          'name_line' => NULL,
-          'first_name' => NULL,
-          'last_name' => NULL,
-          'data' => NULL,
-        ),
-      ),
-    ),
-  );
-
-  $content['demo-slide-3'] = (object) array(
+ $content['demo-slide-3'] = (object) array(
     'default_nodequeue' => array(
       0 => array(
         'queue' => '1',
