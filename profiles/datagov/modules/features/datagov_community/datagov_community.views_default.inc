@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.views_default.inc
+ * datagov_community.views_default.inc
  */
 
 /**
  * Implements hook_views_default_views().
  */
-function data_gov_communities_configuration_views_default_views() {
+function datagov_community_views_default_views() {
   $export = array();
 
   $view = new view();

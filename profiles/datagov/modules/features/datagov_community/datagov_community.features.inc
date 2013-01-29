@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.features.inc
+ * datagov_community.features.inc
  */
 
 /**
  * Implements hook_ctools_plugin_api().
  */
-function data_gov_communities_configuration_ctools_plugin_api() {
+function datagov_community_ctools_plugin_api() {
   list($module, $api) = func_get_args();
   if ($module == "page_manager" && $api == "pages_default") {
     return array("version" => "1");
@@ -21,14 +21,14 @@ function data_gov_communities_configuration_ctools_plugin_api() {
 /**
  * Implements hook_views_api().
  */
-function data_gov_communities_configuration_views_api() {
+function datagov_community_views_api() {
   return array("version" => "3.0");
 }
 
 /**
  * Implements hook_fe_nodequeue_export_fields().
  */
-function data_gov_communities_configuration_fe_nodequeue_export_fields() {
+function datagov_community_fe_nodequeue_export_fields() {
   $nodequeues = array();
 
   // Exported nodequeues: community_hub_slides
@@ -61,7 +61,7 @@ function data_gov_communities_configuration_fe_nodequeue_export_fields() {
 /**
  * Implements hook_node_info().
  */
-function data_gov_communities_configuration_node_info() {
+function datagov_community_node_info() {
   $items = array(
     'community' => array(
       'name' => t('Community'),

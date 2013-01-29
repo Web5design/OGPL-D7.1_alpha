@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.features.field.inc
+ * datagov_community.features.field.inc
  */
 
 /**
  * Implements hook_field_default_fields().
  */
-function data_gov_communities_configuration_field_default_fields() {
+function datagov_community_field_default_fields() {
   $fields = array();
 
   // Exported field: 'node-community-body'.

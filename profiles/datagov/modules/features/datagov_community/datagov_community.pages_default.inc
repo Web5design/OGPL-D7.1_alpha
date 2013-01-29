@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.pages_default.inc
+ * datagov_community.pages_default.inc
  */
 
 /**
  * Implements hook_default_page_manager_pages().
  */
-function data_gov_communities_configuration_default_page_manager_pages() {
+function datagov_community_default_page_manager_pages() {
   $page = new stdClass();
   $page->disabled = FALSE; /* Edit this to true to make a default page disabled initially */
   $page->api_version = 1;

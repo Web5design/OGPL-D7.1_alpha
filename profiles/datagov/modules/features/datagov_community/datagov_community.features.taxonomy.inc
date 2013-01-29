@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.features.taxonomy.inc
+ * datagov_community.features.taxonomy.inc
  */
 
 /**
  * Implements hook_taxonomy_default_vocabularies().
  */
-function data_gov_communities_configuration_taxonomy_default_vocabularies() {
+function datagov_community_taxonomy_default_vocabularies() {
   return array(
     'release_labels' => array(
       'name' => 'Release Labels',

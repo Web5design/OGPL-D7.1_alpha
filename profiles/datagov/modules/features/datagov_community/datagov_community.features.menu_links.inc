@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.features.menu_links.inc
+ * datagov_community.features.menu_links.inc
  */
 
 /**
  * Implements hook_menu_default_menu_links().
  */
-function data_gov_communities_configuration_menu_default_menu_links() {
+function datagov_community_menu_default_menu_links() {
   $menu_links = array();
 
   // Exported menu link: main-menu:communities

@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.features.content.inc
+ * datagov_community.features.content.inc
  */
 
 /**
  * Implements hook_content_defaults().
  */
-function data_gov_communities_configuration_content_defaults() {
+function datagov_community_content_defaults() {
   $content = array();
 
   $content['demo-application'] = (object) array(

@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.strongarm.inc
+ * datagov_community.strongarm.inc
  */
 
 /**
  * Implements hook_strongarm().
  */
-function data_gov_communities_configuration_strongarm() {
+function datagov_community_strongarm() {
   $export = array();
 
   $strongarm = new stdClass();

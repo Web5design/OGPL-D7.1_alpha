@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * data_gov_communities_configuration.features.user_permission.inc
+ * datagov_community.features.user_permission.inc
  */
 
 /**
  * Implements hook_user_default_permissions().
  */
-function data_gov_communities_configuration_user_default_permissions() {
+function datagov_community_user_default_permissions() {
   $permissions = array();
 
   // Exported permission: administer dashboards.

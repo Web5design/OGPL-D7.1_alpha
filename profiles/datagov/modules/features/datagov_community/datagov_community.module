@@ -4,4 +4,4 @@
  * Code for the Data.gov Communities Configuration feature.
  */
 
-include_once 'data_gov_communities_configuration.features.inc';
+include_once 'datagov_community.features.inc';
