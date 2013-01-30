@@ -86,7 +86,7 @@ function datagov_community_default_page_manager_pages() {
     $pane->configuration = array(
       'admin_title' => 'Dataset graph',
       'title' => 'Dataset graph',
-      'body' => '<div class="centered"><a href="#"><img style="border: 0;" src="/profiles/datagov/themes/datagov/logo.png" alt="Logo" border="0" height="55" width="208"></a></div><p>This is a place holder for dataset graph stats</p>',
+      'body' => '<div class="centered"><a href="#"><img style="border: 0;" src="/profiles/ogpl7/themes/datagov/logo.png" alt="Logo" border="0" height="55" width="208"></a></div><p>This is a place holder for dataset graph stats</p>',
       'format' => 'php_code',
       'substitute' => TRUE,
     );
@@ -191,15 +191,15 @@ $output = drupal_render(_block_get_renderable_array(_block_render_blocks(array($
     $pane->configuration = array(
       'admin_title' => 'Events Calendar',
       'title' => '',
-      'body' => '<img src="sites/all/themes/datagov/images/calendar-selected.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/1event-off.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/1event-on.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/2events-off.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/2events-on.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/3events-off.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/3events-on.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/multievents-off.png" class="preloads" />
-<img src="sites/all/themes/datagov/images/multievents-on.png" class="preloads" />
+      'body' => '<img src="/profiles/ogpl7/themes/datagov/images/calendar-selected.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/1event-off.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/1event-on.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/2events-off.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/2events-on.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/3events-off.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/3events-on.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/multievents-off.png" class="preloads" />
+<img src="/profiles/ogpl7/themes/datagov/images/multievents-on.png" class="preloads" />
 <div class="events-wrapper full-width toggle start-hidden">
     <div class="grid12-12 centered-div">
         <div class="events-calendar-view">
