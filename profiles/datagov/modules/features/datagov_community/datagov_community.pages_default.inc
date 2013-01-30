@@ -21,7 +21,7 @@ function datagov_community_default_page_manager_pages() {
     'settings' => NULL,
   );
   $page->menu = array(
-    'type' => 'none',
+    'type' => 'normal',
     'title' => 'Communities',
     'name' => 'main-menu',
     'weight' => '30',

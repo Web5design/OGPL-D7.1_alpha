@@ -33,7 +33,7 @@ function datagov_community_fe_nodequeue_export_fields() {
 
   // Exported nodequeues: community_hub_slides
   $nodequeues['community_hub_slides'] = array(
-    'qid' => '1',
+    'qid' => '2',
     'name' => 'community_hub_slides',
     'title' => 'Community Hub Slides',
     'subqueue_title' => '',
