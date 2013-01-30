@@ -10,6 +10,42 @@
 function datagov_community_extra_content_defaults() {
   $content = array();
 
+  $content['demo-community-page'] = (object) array(
+    'link' => array(
+      'menu_name' => 'main-menu',
+      'link_path' => 'node-name/demo-community-page',
+      'router_path' => 'node/%',
+      'link_title' => 'Demo-Community',
+      'options' => array(),
+      'module' => 'menu',
+      'hidden' => '0',
+      'external' => '0',
+      'has_children' => '0',
+      'expanded' => '0',
+      'weight' => '0',
+      'parent_path' => 'communities',
+      'identifier' => 'main-menu:node-name/demo-community-page',
+    ),
+    'title' => 'Demo-Community',
+    'status' => '1',
+    'promote' => '0',
+    'sticky' => '1',
+    'type' => 'community',
+    'language' => 'und',
+    'created' => '1359506976',
+    'comment' => '1',
+    'translate' => '0',
+    'machine_name' => 'demo-community-page',
+    'body' => array(),
+    'group_group' => array(
+      'und' => array(
+        0 => array(
+          'value' => '1',
+        ),
+      ),
+    ),
+  );
+
   $content['datagov-demo-challange'] = (object) array(
     'title' => 'Demo Challange',
     'status' => '1',
