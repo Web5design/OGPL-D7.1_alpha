@@ -43,7 +43,7 @@ function datagov_install_finished(&$install_state) {
   // will be warned if they've installed an out of date Drupal version.
   // Will also trigger indexing of profile-supplied content or feeds.
   drupal_cron_run();
-
+  
   // fix Demo Community menu link parent 
   $item = array(
     'menu_name' => 'main-menu',
@@ -55,9 +55,11 @@ function datagov_install_finished(&$install_state) {
   menu_link_save($item);
 
   $item = array(
-    'plid' => '546',
+    'plid' => '545',
     'mlid' => '538',
-    'link_path' => 'node/5',
+    'menu_name' => 'main-menu',
+    'module' => 'menu',
+    'link_path' => 'node/1',
     'link_title' => 'Demo Community',
   );
   menu_link_save($item);
