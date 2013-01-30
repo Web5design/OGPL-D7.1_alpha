@@ -96,7 +96,7 @@ function datagov_boxes_default_box() {
   $box->description = 'Home Feature - Communities';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="/communities"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-communities.png" alt="OGPL7 Communities" border="0" height="150" width="280"></a></div><p>Come explore, discuss, meet others in the same field, and develop the data and apps in the community that you care about. Join in the discussions by <a href="/communities">going to communities</a>, some of which are listed below, that interest you.</p>',
+      'value' => '<div class="centered"><a href="/communities"><img style="border: 0; vertical-align: middle;" src="/profiles/ogpl7/themes/datagov/images/home-feature-communities.png" alt="OGPL7 Communities" border="0" height="150" width="280"></a></div><p>Come explore, discuss, meet others in the same field, and develop the data and apps in the community that you care about. Join in the discussions by <a href="/communities">going to communities</a>, some of which are listed below, that interest you.</p>',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
@@ -112,7 +112,7 @@ function datagov_boxes_default_box() {
   $box->description = 'Home Feature - Data and Apps';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="#"><img style="border: 0;" src="/sites/default/files/images/home-feature-data-apps.png" alt="An example of a citizen-developed application" border="0" height="150" width="280"></a></div><p>This is a place holder for data and apps</p>',
+      'value' => '<div class="centered"><a href="#"><img style="border: 0;" src="/profiles/ogpl7/themes/datagov/images/home-feature-data-apps.png" alt="An example of a citizen-developed application" border="0" height="150" width="280"></a></div><p>This is a place holder for data and apps</p>',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
@@ -176,7 +176,7 @@ function datagov_boxes_default_box() {
   $box->description = 'Home Feature - Open Government';
   $box->options = array(
     'body' => array(
-      'value' => '<div class="centered"><a href="#"><img style="border: 0; vertical-align: middle;" src="/sites/default/files/images/home-feature-opengov.png" alt="What\'s New at Data.gov" border="0" height="150" width="280"></a></div><p>First open source code released for the Open Government Platform delivered by the governments of India and the U.S.',
+      'value' => '<div class="centered"><a href="#"><img style="border: 0; vertical-align: middle;" src="/profiles/ogpl7/themes/datagov/images/home-feature-opengov.png" alt="What\'s New at Data.gov" border="0" height="150" width="280"></a></div><p>First open source code released for the Open Government Platform delivered by the governments of India and the U.S.',
       'format' => 'full_html',
     ),
     'additional_classes' => '',
