@@ -253,7 +253,7 @@ function datagov_boxes_default_box() {
   $box->description = 'USA Flag & Info';
   $box->options = array(
     'body' => array(
-      'value' => '<p><a href="http://www.whitehouse.gov"><img title="Visit Whitehouse.gov" src="/sites/all/themes/datagov/images/usa-flag.gif" alt="An American flag linked to Whitehouse.gov" border="0" /></a> <em>An Official Web Site of the United States Government</em></p>',
+      'value' => '<p><em>An Official Web Site of the United States Government</em></p>',
       'format' => 'full_html',
     ),
     'additional_classes' => '',

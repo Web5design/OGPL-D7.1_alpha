@@ -43,11 +43,17 @@ function datagov_base_context_default_contexts() {
           'region' => 'header_top',
           'weight' => '-8',
         ),
-        'search-form' => array(
-          'module' => 'search',
-          'delta' => 'form',
+        'boxes-usaflag_info' => array(
+          'module' => 'boxes',
+          'delta' => 'usaflag_info',
+          'region' => 'header_top',
+          'weight' => '-10',
+        ),
+        'blockify-blockify-logo' => array(
+          'module' => 'blockify',
+          'delta' => 'blockify-logo',
           'region' => 'header',
-          'weight' => '-25',
+          'weight' => '-27',
         ),
         'system-user-menu' => array(
           'module' => 'system',
@@ -55,11 +61,11 @@ function datagov_base_context_default_contexts() {
           'region' => 'header',
           'weight' => '-26',
         ),
-        'blockify-blockify-logo' => array(
-          'module' => 'blockify',
-          'delta' => 'blockify-logo',
+        'search-form' => array(
+          'module' => 'search',
+          'delta' => 'form',
           'region' => 'header',
-          'weight' => '-27',
+          'weight' => '-25',
         ),
         'superfish-1' => array(
           'module' => 'superfish',
