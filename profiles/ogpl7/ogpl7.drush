@@ -1,2 +1,2 @@
 #!/bin/bash
-/usr/bin/drush/drush si ogpl7 -y
+/usr/bin/drush/drush si ogpl7 --account-pass=password -y
