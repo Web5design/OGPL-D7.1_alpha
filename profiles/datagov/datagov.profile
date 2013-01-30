@@ -44,19 +44,39 @@ function datagov_install_finished(&$install_state) {
   // Will also trigger indexing of profile-supplied content or feeds.
   drupal_cron_run();
 
+  // Make Demo Community menu link a child of Communities menu link
+  /*db_merge('menu_links')
+    ->key(array(
+      'module' => 'menu',
+      'menu_name' => 'main-menu',
+    ))
+    ->fields(array(
+      'plid' => '541',
+      'plid' => '543',
+      'plid' => '543',
+    ))
+    ->execute();*/
+ 
+  // fix Demo Community menu link parent 
+  $item = array(
+    'menu_name' => 'main-menu',
+    'module' => 'system',
+    'link_path' => 'communities',
+    'router_path' => 'communities',
+    'link_title' => 'Communities',
+  );
+  menu_link_save($item);
+
+  $item = array(
+    'plid' => '540',
+    'mlid' => '538',
+    'link_path' => 'node/5',
+    'link_title' => 'Demo Community',
+  );
+  menu_link_save($item);
+  menu_cache_clear_all();
 
   return $output;
 
 }
 
-
-/*
- * implements hook_profile_tasks
- **/
-
-function datagov_profile_tasks() {
-  // Revert all features in order to solve a wierd bug where features overrides some values
-  // after enabling some features
-  //features_rebuild();
-  //features_revert();
-}
