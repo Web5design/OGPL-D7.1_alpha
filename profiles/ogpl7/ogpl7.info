@@ -1,4 +1,4 @@
-name = "OpenGov Distro"
+name = "OGPL7 Distro"
 description = "Profile that installs all required features and modules"
 core = 7.x
 dependencies[] = block

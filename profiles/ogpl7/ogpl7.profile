@@ -4,18 +4,18 @@
 /*
  * Implements hook_install_tasks_alter()
  */
-function datagov_install_tasks_alter(&$tasks, $install_state) {
+function ogpl7_install_tasks_alter(&$tasks, $install_state) {
 
   // substitute our own finished step
   $tasks['install_finished'] = array(
     'display_name' => st('Installation has been finished successfully'),
     'display' => 1,
-    'function' => 'datagov_install_finished',
+    'function' => 'ogpl7_install_finished',
   );
     
 }
 
-function datagov_install_finished(&$install_state) {
+function ogpl7_install_finished(&$install_state) {
   drupal_set_title(st('@drupal installation complete', array('@drupal' => drupal_install_profile_distribution_name())), PASS_THROUGH);
   $messages = drupal_set_message();
   $output = '<p>' . st('Congratulations, you installed @drupal!', array('@drupal' => drupal_install_profile_distribution_name())) . '</p>';

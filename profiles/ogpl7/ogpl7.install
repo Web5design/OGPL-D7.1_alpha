@@ -5,7 +5,7 @@
  *
  * Perform actions to set up the site for this profile.
  */
-function datagov_install() {
+function ogpl7_install() {
 
   // add filtered_html format
   $filtered_html_format = array(
