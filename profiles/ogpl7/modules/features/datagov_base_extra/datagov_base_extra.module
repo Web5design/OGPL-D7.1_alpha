@@ -1,0 +1,164 @@
+<?php
+/**
+ * Implement hook_modules_enabled().
+ * Typically, defaultcontent.module waits for cron to create nodes.
+ * This forces node creation immediately, then sets front page URL.
+ */
+function datagov_base_extra_modules_enabled($modules) {   
+  // quit if datagov_base hasn't been enabled
+  if (!in_array('datagov_base', $modules)) return;
+
+  // insert log in menu link into user-menu
+  $item = array(
+    'menu_name' => 'user-menu',
+    'module' => 'menu',
+    'router_path' => 'user/login',
+    'link_path' => 'user/login',
+    'link_title' => 'Log in',
+  );
+  menu_link_save($item);
+
+
+
+  // set user-menu block title to <none>
+  db_merge('block')
+    ->key(array(
+      'theme' => 'datagov',
+      'module' => 'system',
+      'delta' => 'user-menu',
+    ))
+    ->fields(array(
+      'status' => 0,
+      'weight' => 0,
+      'region' => -1,
+      'custom' => 0,
+      'visibility' => 0,
+      'pages' => '',
+      'title' => '<none>',
+      'cache' => -1,
+    ))
+    ->execute();
+
+
+  // set main-menu block title to <none>
+  db_merge('block')
+    ->key(array(
+      'theme' => 'datagov',
+      'module' => 'superfish',
+      'delta' => '1',
+    ))
+    ->fields(array(
+      'status' => 0,
+      'weight' => 0,
+      'region' => -1,
+      'custom' => 0,
+      'visibility' => 0,
+      'pages' => '',
+      'title' => '<none>',
+      'cache' => -1,
+    ))
+    ->execute();
+
+  // set menu-footer-menu block title to <none>
+  db_merge('block')
+    ->key(array(
+      'theme' => 'datagov',
+      'module' => 'menu',
+      'delta' => 'menu-footer-menu',
+    ))
+    ->fields(array(
+      'status' => 0,
+      'weight' => 0,
+      'region' => -1,
+      'custom' => 0,
+      'visibility' => 0,
+      'pages' => '',
+      'title' => '<none>',
+      'cache' => -1,
+    ))
+    ->execute();
+    
+
+  // add fusion grid configuration (does not provide exportables)
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'boxes__usaflag_info',
+      'skin' => '_additional',
+      'options' => 'a:1:{i:0;s:12:"usaflag-info";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'boxes__usaflag_info',
+      'skin' => 'fusion_apply_settings__block_group__datagov__groups__active_tab',
+      'options' => 'a:1:{i:0;s:64:"edit-fusion-apply-settings-block-group-datagov-groups-additional";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'boxes__usaflag_info',
+      'skin' => 'fusion_skins_grid12_width',
+      'options' => 'a:1:{i:0;s:8:"grid12-4";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'menu__menu-footer-menu',
+      'skin' => '_additional',
+      'options' => 'a:1:{i:0;s:11:"footer-menu";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'menu__menu-footer-menu',
+      'skin' => 'fusion_apply_settings__block_group__datagov__groups__active_tab',
+      'options' => 'a:1:{i:0;s:64:"edit-fusion-apply-settings-block-group-datagov-groups-additional";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'menu__menu-footer-menu',
+      'skin' => 'fusion_skins_block_positioning',
+      'options' => 'a:1:{i:0;s:13:"fusion-center";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'menu__menu-footer-menu',
+      'skin' => 'fusion_skins_content_alignment',
+      'options' => 'a:1:{i:0;s:12:"fusion-right";}',
+      'status' => '1'
+    ))
+    ->execute();
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'menu__menu-footer-menu',
+      'skin' => 'fusion_menu',
+      'options' => 'a:1:{i:0;s:18:"fusion-inline-menu";}',
+      'status' => '1'
+    ))
+    ->execute();
+
+}

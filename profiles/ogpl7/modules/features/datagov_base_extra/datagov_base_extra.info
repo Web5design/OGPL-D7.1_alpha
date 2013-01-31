@@ -1,0 +1,13 @@
+name = Datagov Base Extra
+description = Extra feature for Datagov Base
+core = 7.x
+package = Datagov
+version = 7.x-1.0-beta1
+project = datagov_base_extra
+dependencies[] = datagov_base
+dependencies[] = fusion_accelerator
+dependencies[] = fusion_apply
+dependencies[] = fusion_apply_ui
+dependencies[] = fusion_responsive_ie
+
+features[features_api][] = api:1

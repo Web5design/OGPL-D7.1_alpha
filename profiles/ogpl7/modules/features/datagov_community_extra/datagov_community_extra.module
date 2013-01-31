@@ -1,0 +1,24 @@
+<?php
+/**
+ * Implement hook_modules_enabled().
+ */
+function datagov_community_extra_modules_enabled($modules) {
+  // proceed only if base module has been enabled
+  if (!in_array('datagov_community', $modules)) return;
+
+  // set comCatMenu css class for block_og_menu
+  $result = db_insert('fusion_apply_skins')
+    ->fields(array(
+      'sid' => 115,
+      'theme' => 'datagov',
+      'module' => 'block',
+      'element' => 'og_menu__og_single_menu_block',
+      'skin' => '_additional',
+      'options' => 'a:1:{i:0;s:10:"comCatMenu";}',
+      'status' => '1'
+    ))
+    ->execute();
+
+  // set main-menu block title to none
+  // set user-menu block title to noe
+}

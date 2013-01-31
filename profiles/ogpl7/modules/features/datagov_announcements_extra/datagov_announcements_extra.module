@@ -1,0 +1,41 @@
+<?php
+/**
+ * Implement hook_modules_enabled().
+ */
+function datagov_announcements_extra_modules_enabled($modules) {
+  // proceed only if base module has been enabled
+  if (!in_array('datagov_announcements', $modules)) return;
+
+  // create terms for announcements_and_news vocabulary
+  $vocabulary = taxonomy_vocabulary_machine_name_load('announcements_and_news');
+  
+  // if vocabulary doesn't exist yet, create it
+  if (!isset($vocabulary->vid) || empty($vocabulary->vid)) {
+    $vocabulary = new stdClass();
+    $vocabulary->name = 'Announcements and News';
+    $vocabulary->machine_name = 'announcements_and_news';
+    taxonomy_vocabulary_save($vocabulary);
+  }
+
+  // terms
+  $types = array(
+    'Announcement',
+    'In the News',
+    'New Features',
+  );
+
+  // add terms to vocabulary
+  foreach ($types as $type) {
+    // determine if the term exists
+    $terms = taxonomy_term_load_multiple(array(), array('name' => $type, 'vid' => $vocabulary->vid));
+
+    // if term doesn't exist, create it
+    if (count($terms) == 0) {
+      $term = new stdClass();
+      $term->name = $type;
+      $term->vid = $vocabulary->vid;
+      taxonomy_term_save($term);
+    }
+  }
+  
+}

@@ -1,0 +1,16 @@
+name = Datagov Community Extra
+description = A feature that provides some extra options for the main feature
+core = 7.x
+package = Datagov
+php = 5.2.4
+version = 7.x-1.0-beta1
+project = datagov_community_extra
+dependencies[] = defaultcontent
+dependencies[] = fusion_accelerator
+dependencies[] = fusion_apply
+dependencies[] = fusion_apply_ui
+dependencies[] = fusion_responsive_ie
+features[content][] = datagov-demo-challange
+features[content][] = datagov-demo-event
+features[content][] = demo-community-page
+features[features_api][] = api:1
