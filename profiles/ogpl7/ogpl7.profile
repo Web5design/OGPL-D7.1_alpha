@@ -52,11 +52,11 @@ function ogpl7_install_finished(&$install_state) {
     'router_path' => 'communities',
     'link_title' => 'Communities',
   );
-  menu_link_save($item);
+  $plid = menu_link_save($item);
 
   $item = array(
-    'plid' => '545',
-    'mlid' => '538',
+    'plid' => $plid,
+    'mlid' => '561',
     'menu_name' => 'main-menu',
     'module' => 'menu',
     'link_path' => 'node/1',
