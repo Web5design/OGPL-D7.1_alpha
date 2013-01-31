@@ -1,0 +1,10 @@
+name = Datagov User Permissions
+description = This feature provides some default user permissions
+core = 7.x
+package = Datagov
+version = 7.x-1.0-beta1
+project = datagov_user_permissions
+dependencies[] = features
+dependencies[] = search
+features[features_api][] = api:1
+features[user_permission][] = search content
