@@ -13,3 +13,10 @@ function datagov_forums_ctools_plugin_api() {
     return array("version" => "1");
   }
 }
+
+/**
+ * Implements hook_views_api().
+ */
+function datagov_forums_views_api() {
+  return array("version" => "3.0");
+}
