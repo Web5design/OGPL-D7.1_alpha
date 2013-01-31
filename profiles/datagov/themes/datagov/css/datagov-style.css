@@ -1829,7 +1829,7 @@ div.usasearch-results-wrap div.search-notice {
 body.datagov-community .grid12-4 { width:400px; }
 body.datagov-community #logo { margin: 0; }
 body.datagov-community #header-group .logo .content, body.datagov-community #logo img { float:left; }
-body.datagov-community #header-group .community-label { display: block; float: left; }
+body.datagov-community #header-group .community-label { display: block; float: left;margin-top:5px; }
 body.datagov-community #header-group .community-label span { display: block; float: left; padding:0 10px; margin:17px 0 0 0; color:#999; background-color: transparent; font:bold 20px Trajan,Georgia,"Times New Roman",Serif; height:24px; line-height:24px;  }
 body.datagov-community #header-group .community-label h1.community-name { display: block; float: left; margin:15px 0px 0px 0px; padding:0px; color:#666; /* background:transparent url("../images/separator.png") no-repeat 0px 5px; */ background-color: transparent; font:normal 24px Trajan,Georgia,"Times New Roman",Serif; height:40px; line-height:28px;  }
 body.datagov-community #header-group .community-label h1.community-name a { text-decoration: none; color: #5881B0;  }
@@ -2722,7 +2722,7 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     margin-bottom: 0;
     width: 650px;
 }
-#block-blockify-blockify-logo .content{width:215px;}
+#block-blockify-blockify-logo .content{width:195px;}
 #block-blockify-blockify-logo .content, #block-blockify-blockify-logo .community-label{float:left;}
 #block-system-user-menu {
     clear: right;
@@ -2734,7 +2734,7 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
 #block-search-form {
     clear: left;
     float: right;
-    margin-top: -28px;
+    margin-top: -35px;
     width: 350px;
 }
 
