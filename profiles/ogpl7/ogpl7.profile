@@ -77,6 +77,9 @@ function ogpl7_install_finished(&$install_state) {
   menu_link_save($item);
   menu_cache_clear_all();
 
+  // rebuild permissions
+  node_access_rebuild();
+
   return $output;
 
 }
