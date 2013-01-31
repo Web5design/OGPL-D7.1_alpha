@@ -1,10 +1,11 @@
 INSTALLATION:
 
 1- Make sure that your hosting environment meets the following requirements: http://drupal.org/requirements
-2- Download OGPL7 alpha distribution:
+2- Download/Clone OGPL7 alpha distribution:
   Option a-ZIP: https://github.com/REI-Systems/opendatagov/archive/master.zip
   Option b-git(make sure that git is installed on your system): git clone https://github.com/REI-Systems/opendatagov.git
 3- Follow these instruction(ignore "Download Drupal" section): http://drupal.org/documentation/install/beginners
+  *Note: On the profile selection page, choose "OGPL7" instead of standard
 4- Enjoy
 
 ALTERNATIVE INSTALLATION 
