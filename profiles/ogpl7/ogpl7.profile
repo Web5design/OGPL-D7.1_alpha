@@ -54,9 +54,21 @@ function ogpl7_install_finished(&$install_state) {
   );
   $plid = menu_link_save($item);
 
+
+  // get mlid of "Demo Community" menu link
+    $result = db_select('menu_links', 'm')
+    ->fields('m')
+    ->condition('link_title', 'Demo-Community','=')
+    ->condition('link_path', 'node/1','=')
+    ->condition('module', 'menu','=')
+    ->execute()
+    ->fetchAssoc();
+  $mlid = $result['mlid'];
+
+  // set plid of "Demo Community" menu link
   $item = array(
     'plid' => $plid,
-    'mlid' => '561',
+    'mlid' => $mlid,
     'menu_name' => 'main-menu',
     'module' => 'menu',
     'link_path' => 'node/1',
