@@ -5,6 +5,7 @@ package = Datagov
 php = 5.2.4
 version = 7.x-1.2
 project = datagov_announcements
+dependencies[] = datagov_announcements_extra
 dependencies[] = context
 dependencies[] = ctools
 dependencies[] = date
