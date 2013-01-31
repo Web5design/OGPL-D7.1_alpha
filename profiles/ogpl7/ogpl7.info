@@ -55,6 +55,7 @@ dependencies[] = datagov_announcements
 dependencies[] = datagov_content_notification
 dependencies[] = datagov_content_moderation
 dependencies[] = datagov_vote
+dependencies[] = datagov_user_permissions
 dependencies[] = panel_layouts_extra
 dependencies[] = datagov_webform
 dependencies[] = date_popup
