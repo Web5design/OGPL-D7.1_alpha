@@ -10,14 +10,14 @@
 function datagov_user_permissions_field_default_fields() {
   $fields = array();
 
-  // Exported field: 'user-user-field_communities'.
-  $fields['user-user-field_communities'] = array(
+  // Exported field: 'user-user-group_audience'.
+  $fields['user-user-group_audience'] = array(
     'field_config' => array(
       'active' => '1',
-      'cardinality' => '1',
+      'cardinality' => '-1',
       'deleted' => '0',
       'entity_types' => array(),
-      'field_name' => 'field_communities',
+      'field_name' => 'group_audience',
       'foreign keys' => array(
         'og' => array(
           'columns' => array(
@@ -33,17 +33,15 @@ function datagov_user_permissions_field_default_fields() {
       ),
       'locked' => '0',
       'module' => 'og',
+      'no_ui' => TRUE,
       'settings' => array(),
       'translatable' => '0',
       'type' => 'group',
     ),
     'field_instance' => array(
       'bundle' => 'user',
-      'default_value' => array(
-        0 => array(
-          'gid' => '1',
-        ),
-      ),
+      'default_value' => NULL,
+      'default_value_function' => 'og_field_audience_default_value',
       'deleted' => '0',
       'description' => '',
       'display' => array(
@@ -52,15 +50,27 @@ function datagov_user_permissions_field_default_fields() {
           'module' => 'og',
           'settings' => array(),
           'type' => 'og_list_default',
-          'weight' => 1,
+          'weight' => 0,
         ),
       ),
       'entity_type' => 'user',
-      'field_name' => 'field_communities',
+      'field_name' => 'group_audience',
       'label' => 'Communities',
       'required' => 0,
       'settings' => array(
         'user_register_form' => 1,
+      ),
+      'view modes' => array(
+        'full' => array(
+          'custom settings' => FALSE,
+          'label' => 'Full',
+          'type' => 'og_list_default',
+        ),
+        'teaser' => array(
+          'custom settings' => FALSE,
+          'label' => 'Teaser',
+          'type' => 'og_list_default',
+        ),
       ),
       'widget' => array(
         'active' => 1,
@@ -69,8 +79,9 @@ function datagov_user_permissions_field_default_fields() {
           'opt_group' => 'always',
         ),
         'type' => 'group_audience',
-        'weight' => '8',
+        'weight' => 7,
       ),
+      'widget_type' => 'group_audience',
     ),
   );
 
