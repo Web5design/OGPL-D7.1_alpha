@@ -39,7 +39,11 @@ function datagov_user_permissions_field_default_fields() {
     ),
     'field_instance' => array(
       'bundle' => 'user',
-      'default_value' => NULL,
+      'default_value' => array(
+        0 => array(
+          'gid' => '1',
+        ),
+      ),
       'deleted' => '0',
       'description' => '',
       'display' => array(
@@ -62,7 +66,7 @@ function datagov_user_permissions_field_default_fields() {
         'active' => 1,
         'module' => 'og',
         'settings' => array(
-          'opt_group' => 'auto',
+          'opt_group' => 'always',
         ),
         'type' => 'group_audience',
         'weight' => '8',
