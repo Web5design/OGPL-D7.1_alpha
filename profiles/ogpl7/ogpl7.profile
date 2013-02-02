@@ -59,11 +59,11 @@ function ogpl7_install_finished(&$install_state) {
     $result = db_select('menu_links', 'm')
     ->fields('m')
     ->condition('link_title', 'Demo-Community','=')
-    ->condition('link_path', 'node/1','=')
     ->condition('module', 'menu','=')
     ->execute()
     ->fetchAssoc();
   $mlid = $result['mlid'];
+  $link_path = $result['link_path'];
 
   // set plid of "Demo Community" menu link
   $item = array(
@@ -71,7 +71,7 @@ function ogpl7_install_finished(&$install_state) {
     'mlid' => $mlid,
     'menu_name' => 'main-menu',
     'module' => 'menu',
-    'link_path' => 'node/1',
+    'link_path' => $link_path,
     'link_title' => 'Demo Community',
   );
   menu_link_save($item);
