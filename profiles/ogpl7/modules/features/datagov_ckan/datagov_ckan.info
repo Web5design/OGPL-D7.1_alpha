@@ -1,0 +1,7 @@
+name = Datagov CKAN
+description = This feature provides CKAN integration configuration
+core = 7.x
+package = Datagov
+version = 7.x-1.0beta1
+project = datagov_ckan
+features[features_api][] = api:1
