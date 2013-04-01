@@ -1,0 +1,5 @@
+name = Data.gov SSO
+description = Adds Extra SSO functionality. Works with simplesamlphp_auth.
+package = REI Custom
+core = 7.x
+dependencies[] = simplesamlphp_auth

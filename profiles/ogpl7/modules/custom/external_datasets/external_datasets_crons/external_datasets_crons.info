@@ -1,0 +1,6 @@
+name = External Datasets Cron Items
+description = Cron job for External Datasets maintenance.
+package = REI Custom
+core = 7.x
+version = 7.x-1.0
+dependencies[] = external_datasets

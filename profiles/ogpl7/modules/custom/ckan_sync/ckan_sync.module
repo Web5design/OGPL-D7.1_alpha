@@ -1,0 +1,711 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+/**
+ * Implementation of hook_menu().
+ */
+function ckan_sync_menu() {
+  $items = array();
+  $items['admin/config/development/ckan_sync_communities'] = array(
+    'title' => t('Mapping Drupal Communities to CKAN Groups'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ckan_sync_groups'),
+  );
+  $items['admin/config/development/ckan_dataset_sync'] = array(
+    'title' => 'Synchronize CKAN Datasets Cron Job Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ckan_sync_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+/**
+ * Render configuration form.
+ */
+function ckan_sync_groups() {
+
+  $form['mapping'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Drupal Community to CKAN Group map'),
+  );
+  $form['mapping']['intro'] = array(
+    '#markup' => '<div>' . t('Here are the all Communities. Find CKAN Group names and input them here to match Communities. Dataset will be synchronized according to this mapping.') . '</div>',
+  );
+
+  $gids = og_get_all_group();
+  $ogs = array();
+  foreach ($gids as $gid) {
+    $og = og_load($gid);
+    $ogs[$og->label] = $gid;
+  }
+  ksort($ogs);
+
+  foreach ($ogs as $oglable => $gid) {
+    $variable_name = "ckan_sync_gid_" . $gid;
+    $form['mapping'][$variable_name] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get($variable_name, ''),
+    '#field_prefix' => $oglable,
+    '#size' => 50,
+    );
+  }
+  return system_settings_form($form);
+}
+
+/**
+ * The form to provide a link to cron.php.
+ */
+function ckan_sync_form($form, &$form_state) {
+
+  $form['status'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cron status information'),
+  );
+
+  $form['status']['current_cron_status'] = array(
+    '#markup' => '<div>' . t('CKAN sync cron job is %status.',
+      array(
+        '%status' => variable_get('ckan_sync_enabled', 1)?"Enabled":"Disabled",
+      )) . '</div>',
+  );
+
+  // Need to use Drupal timezone instead of system timezone.
+  // Ignore PHP strict notice if time zone has not yet been set in the php.ini configuration.
+  $timezone_system = @date_default_timezone_get();
+  $timezone_drupal = variable_get('date_default_timezone', $timezone_system);
+  $form['status']['last'] = array(
+    '#markup' => '<div>' . t('New CKAN queue will be created the first time cron runs after %time (%timezone time, %seconds seconds from now).' . '</div>',
+      array(
+        '%time' => format_date(variable_get('ckan_sync_next_execution', time()), 'medium', '', $timezone_drupal),
+        '%timezone' => $timezone_drupal,
+        '%seconds' => variable_get('ckan_sync_next_execution', time()) - time(),
+      )
+    ),
+  );
+
+  $queue_community = DrupalQueue::get('ckan_sync_queue_community');
+  $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
+  $queue_dataset = DrupalQueue::get('ckan_sync_queue_dataset');
+  $form['status']['current_cron_queue_status'] = array(
+    '#markup' => '<div>' . t('There are currently %queue_community communities, %queue_pagination pages, %queue_dataset datasets sitting in the queues to be synchronized.',
+      array(
+        '%queue_community' => $queue_community->numberOfItems(),
+        '%queue_pagination' => $queue_pagination->numberOfItems(),
+        '%queue_dataset' => $queue_dataset->numberOfItems(),
+      )) . '</div>',
+  );
+
+
+  $form['cron_run'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Run cron manually'),
+  );
+  $form['cron_run']['cron_trigger'] = array(
+    '#type' => 'submit',
+    '#value' => t('Run cron now'),
+    '#submit' => array('ckan_sync_form_cron_run_submit'),
+  );
+  $form['cron_run']['cron_tip'] = array(
+    '#markup' => t('Tip: To do a manual CKAN sync, make sure to select AND SAVE a wide time frame below. Otherwise the button will do nothing except executing existing queue items.'),
+    '#prefix' => t('<div>'),
+    '#suffix' => t('</div>'),
+  );
+
+
+  $form['force_fresh'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Force to re-sync'),
+  );
+  $form['force_fresh']['description'] = array(
+    "#prefix" => "<div>",
+    "#suffix" => "</div>",
+    '#markup' => t("Reset all dataset ckan_metadata_modified timestamp value, so all datasets will be considered as outdated and will be forced to be refreshed during next sync."),
+  );
+  $form['force_fresh']['force_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset Sync Timestamp'),
+    '#submit' => array('ckan_sync_form_force_fresh_submit'),
+  );
+  $form['force_fresh']['force_tip'] = array(
+    '#markup' => t('Tip: This will make next sync process take much longer to finish. Do this only if there is some problem with existing dataset values.'),
+    '#prefix' => t('<div>'),
+    '#suffix' => t('</div>'),
+  );
+
+
+  $form['queue_delete'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Delete all queued items'),
+  );
+  $form['queue_delete']['delete_description'] = array(
+    "#prefix" => "<div>",
+    "#suffix" => "</div>",
+    '#markup' => t("If too many items were queued mistakenly, use this button to clear all of them."),
+  );
+  $form['queue_delete']['delete_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete all queues'),
+    '#submit' => array('ckan_sync_form_delete_queue_submit'),
+  );
+
+
+  $form['cron_setting'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Daily Cron Job Settings'),
+  );
+  $form['cron_setting']['ckan_sync_enabled'] = array(
+    '#type' => 'radios',
+    '#title' => t('Enable/Disable Ckan Sync Cron Job'),
+    '#default_value' => variable_get('ckan_sync_enabled', 1),
+    '#options' => array(0 => t('Disabled'), 1 => t('Enabled')),
+    '#description' => t("Tip: Don't forget to delete all queues."),
+  );
+
+  $form['cron_setting']['ckan_sync_time_length'] = array(
+    '#type' => 'select',
+    '#title' => t('Cron running length'),
+    '#description' => t('Max runtime per cron run.'),
+    '#default_value' => variable_get('ckan_sync_time_length', 20),
+    '#options' => array(
+      5 => t('5 seconds'),
+      20 => t('20 seconds'),
+      60 => t('1 minute'),
+      300 => t('5 minutes'),
+    ),
+  );
+
+  $form['cron_setting']['ckan_sync_time_frame_start'] = array(
+    '#type' => 'select',
+    '#title' => t('Daily time frame - start'),
+    '#default_value' => variable_get('ckan_sync_time_frame_start', "02:00:00"),
+    '#options' => ckan_sync_get_hour_list('start'),
+  );
+
+  $form['cron_setting']['ckan_sync_time_frame_end'] = array(
+    '#type' => 'select',
+    '#title' => t('Daily time frame - end'),
+    '#description' => t('Starting and ending time for daily CKAN sync cron job. In %timezone time.',
+      array('%timezone' => $timezone_drupal,)
+    ),
+    '#default_value' => variable_get('ckan_sync_time_frame_end', "03:59:59"),
+    '#options' => ckan_sync_get_hour_list('end'),
+  );
+
+  return system_settings_form($form);
+}
+
+function ckan_sync_form_validate($form, &$form_state) {
+  // Check start time and end time
+  $start_time = $form_state['values']['ckan_sync_time_frame_start'];
+  $end_time   = $form_state['values']['ckan_sync_time_frame_end'];
+  if ($start_time > $end_time) {
+    form_set_error('ckan_sync_time_frame_end', t('End time cannot be earlier than start time.'));
+  }
+}
+
+/**
+ * Allow user to directly execute cron, optionally forcing it.
+ */
+function ckan_sync_form_cron_run_submit($form, &$form_state) {
+  variable_set('ckan_sync_next_execution', 0);
+
+  if (drupal_cron_run()) {
+    drupal_set_message(t('Cron ran successfully.'));
+  }
+  else {
+    drupal_set_message(t('Cron run failed.'), 'error');
+  }
+}
+
+/**
+ * Allow user to reset ckan_metadata_modified timestamp and force to resync all datasets.
+ */
+function ckan_sync_form_force_fresh_submit($form, &$form_state) {
+  $sql = "
+    DELETE FROM {field_data_field_ckan_metadata_modified}
+    ;
+  ";
+
+  $result = db_query($sql);
+
+  watchdog('ckan_sync', "All dataset ckan_metadata_modified reset");
+
+  drupal_set_message(t('All dataset ckan_metadata_modified timestamps were reset successfully.'));
+}
+
+
+function ckan_sync_form_delete_queue_submit($form, &$form_state) {
+
+  $queue_community = DrupalQueue::get('ckan_sync_queue_community');
+  $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
+  $queue_dataset = DrupalQueue::get('ckan_sync_queue_dataset');
+  $queue_delete = DrupalQueue::get('ckan_sync_queue_delete');
+
+  $queue_community->deleteQueue();
+  $queue_pagination->deleteQueue();
+  $queue_dataset->deleteQueue();
+  $queue_delete->deleteQueue();
+
+
+  watchdog('ckan_sync', "All queues deleted.");
+
+  drupal_set_message(t('All queues were deleted successfully.'));
+}
+
+
+
+/**
+ * Implements hook_cron().
+ */
+function ckan_sync_cron() {
+
+  if (!variable_get('ckan_sync_enabled', 1)) {
+    return;
+  }
+
+  // Is it time? we only do it in the early morning time frame.
+  $b_istimeframe = FALSE;
+  // Need to use Drupal timezone instead of system timezone.
+  // Ignore PHP strict notice if time zone has not yet been set in the php.ini configuration.
+  $timezone_system = @date_default_timezone_get();
+  $timezone_drupal = variable_get('date_default_timezone', $timezone_system);
+  date_default_timezone_set($timezone_drupal);
+
+  // Get the hour according to Drupal default timezone.
+  $current_time = time();
+  $today = date('Y-m-d', $current_time);
+  $time_frame_start = variable_get('ckan_sync_time_frame_start', "02:00:00"); // default 2am
+  $time_frame_end   = variable_get('ckan_sync_time_frame_end', "03:59:59"); // default 4am
+  if ($current_time >= strtotime($today . " " . $time_frame_start) && $current_time < strtotime($today . " " . $time_frame_end)) {
+    $b_istimeframe = TRUE;
+  }
+  // What is next execution time
+  if($current_time < strtotime($today . " " . $time_frame_start)) { // earlier than $time_frame_start
+    $next_execution_timestamp = strtotime($today . " " . $time_frame_start);
+  }
+  else { // Passed today timeframe. wait for tomorrow.
+    $tomorrow = date('Y-m-d', strtotime('+1 day', $current_time));
+    $next_execution_timestamp = strtotime($tomorrow . " " . $time_frame_start);
+  }
+  // Set back to system timezone.
+  date_default_timezone_set($timezone_system);
+
+  // Is queue empty?
+  $b_emptyqueue = FALSE;
+  $queue_community = DrupalQueue::get('ckan_sync_queue_community');
+  $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
+  $queue_dataset = DrupalQueue::get('ckan_sync_queue_dataset');
+  $item_count = $queue_community->numberOfItems() + $queue_pagination->numberOfItems() + $queue_dataset->numberOfItems();
+  if (empty($item_count)) {
+    $b_emptyqueue = TRUE;
+  }
+
+  // Is time for new execution yet?
+  $b_timefornewexecution = FALSE;
+  
+  if ($current_time >= variable_get('ckan_sync_next_execution', 0)) {
+    $b_timefornewexecution = TRUE;
+  }
+
+  // Set next execution time to be 2am (today or tomorrow);
+  variable_set('ckan_sync_next_execution', $next_execution_timestamp);
+
+  if ($b_istimeframe && $b_emptyqueue && $b_timefornewexecution) {
+    // Get a list of dataset id to 
+    $communities = ckan_sync_get_ckan_communities();
+    foreach ($communities as $community) {
+      $queue_community->createItem($community);
+    }
+
+    $item_count = $queue_community->numberOfItems();
+    if ($item_count == 0) {
+      watchdog('ckan_sync', "0 community mapped. Check config for Mapping Drupal Communities to CKAN Groups", array(), WATCHDOG_ALERT);
+    }
+    else {
+      watchdog('ckan_sync', "Community queue created at [$current_time]. $item_count communities to be sync'ed.");
+      // One more thing: add timestamp as last queue.
+      $queue_community->createItem($current_time);
+    }
+  }
+
+}
+
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function ckan_sync_cron_queue_info() {
+  $queues['ckan_sync_queue_community'] = array(
+    'worker callback' => 'ckan_sync_queue_community_worker',
+    'time' => variable_get('ckan_sync_time_length', 20), // 20 second max runtime per cron run.
+  );
+  $queues['ckan_sync_queue_pagination'] = array(
+    'worker callback' => 'ckan_sync_queue_pagination_worker',
+    'time' => variable_get('ckan_sync_time_length', 20), // 20 second max runtime per cron run.
+  );
+  $queues['ckan_sync_queue_dataset'] = array(
+    'worker callback' => 'ckan_sync_queue_dataset_worker',
+    'time' => variable_get('ckan_sync_time_length', 20), // 20 second max runtime per cron run.
+  );
+  $queues['ckan_sync_queue_delete'] = array(
+    'worker callback' => 'ckan_sync_queue_delete_worker',
+    'time' => variable_get('ckan_sync_time_length', 20), // 20 second max runtime per cron run.
+  );
+
+  return $queues;
+}
+
+function ckan_sync_queue_community_worker($item) {
+  $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
+
+  if (is_int($item)) {
+    // This is last item, a timestamp.
+    // Pass it to next queue inline.
+    $time_took = time() - $item;
+    watchdog('ckan_sync', "[$item] community queue completed, took $time_took seconds.");
+    $queue_pagination->createItem($item);
+    return;
+  }
+
+  $community = $item;
+  // Get pages need to be queued to this community.
+  $pages = ckan_sync_get_ckan_pages($community);
+  $limit = variable_get('ckan_sync_items_per_page', 50);
+
+  for ($i=0; $i < $pages; $i++) {
+    $start = $limit * $i;
+    $item = array(
+      "start" => $start,
+      "rows" => $limit, 
+      "community" => $community,
+    );
+    $queue_pagination->createItem($item);
+  }
+}
+
+function ckan_sync_queue_pagination_worker($item) {
+  $queue_dataset = DrupalQueue::get('ckan_sync_queue_dataset');
+
+  if (is_int($item)) {
+    // This is last item, a timestamp.
+    // Pass it to next queue inline.
+    $time_took = time() - $item;
+    watchdog('ckan_sync', "[$item] pagination queue completed, took $time_took seconds.");
+    $queue_dataset->createItem($item);
+    return;
+  }
+
+  $url = trim(variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/'));
+  $url = $url . "api/action/package_search?q=(groups:" . $item['community'] . ")+AND+dataset_type:dataset&sort=metadata_modified%20asc&rows=" . $item['rows'] . "&start=" . $item['start'];
+  $response = drupal_http_request($url);
+
+  if (isset($response->error) || $response->status_message != 'OK') {
+    watchdog('ckan_sync', "Error: url is $url, message is $response->error", array(), WATCHDOG_CRITICAL);
+    return $pages;
+  }
+
+  $ret = json_decode($response->data, true);
+
+  if (!$ret['success']) {
+    watchdog('ckan_sync', "Error: url is $url, message is " . print_r($ret['error'], true), array(), WATCHDOG_CRITICAL);
+    return $pages;
+  }
+
+  $datasets = $ret['result']['results'];
+  foreach ($datasets as $dataset) {
+    $queue_dataset->createItem($dataset);
+  }
+
+}
+
+function ckan_sync_queue_dataset_worker($item) {
+
+  if (is_int($item)) {
+    // This is last item, a timestamp.
+    // Delete all datasets sync'ed before queue creation timestamp.
+    $count = ckan_sync_delete_outdated($item);
+    $time_took = time() - $item;
+    watchdog('ckan_sync', "[$item] queue completed, took $time_took seconds. $count datesets to be deleted.");
+    return;
+  }
+
+  // Load the dataset with this id
+  $sql = "
+    SELECT n.nid, c.field_ckan_metadata_modified_value AS metadata_modified
+    FROM {node} n 
+    JOIN {field_data_field_dataset_id} f
+    ON n.nid = f.entity_id
+    LEFT JOIN {field_data_field_ckan_metadata_modified} c
+    ON n.nid = c.entity_id
+    WHERE
+      n.type = 'data'
+    AND
+      f.field_dataset_id_value = :id
+    LIMIT 1
+  ";
+
+  $result = db_query($sql, array(':id' => $item['id']))->fetchAssoc();
+
+  // No much to do if existing node is same version as CKAN by comparing metadata_modified.
+  // except that we have to update dataset_sync_time so that we dont delete it at the end of each queue.
+  if (!empty($result) && $result['metadata_modified']) {
+    // field_ckan_metadata_modified_value has been re-purposed to stored hash value of certain $item fields
+    // including id, metadata_modified, and groups
+    // too bad $item['groups'] is not the right format we want, so we have to convert it first.
+    $item_groups = array();
+    foreach ($item['groups'] as $item_group) {
+      $item_groups[] = $item_group['name'];
+    }
+    sort($item_groups);
+    $hash = md5($item['id'] . $item['metadata_modified'] . serialize($item_groups));
+
+    if ($result['metadata_modified'] == $hash) {
+      // update dataset_sync_time so that we dont delete it at the end of each queue. 
+      // update using query so it does not trigger node->changed
+      $sql = "
+        UPDATE {field_data_field_dataset_sync_time} f 
+        SET f.field_dataset_sync_time_value = :timestamp
+        WHERE entity_id = :nid
+      ";
+      db_query($sql, array(':timestamp' => time(), 'nid' => $result['nid']));
+      return;
+    }
+  }
+  // TODO detecting local change and override it from ckan.
+
+  // Fetch external dataset info using module datagov_get_metadata
+  $b_echo_out = FALSE;
+  $b_use_cache = FALSE;
+  $dataset_info = datagov_get_metadata_page($item['id'], $b_echo_out, $b_use_cache);
+  $dataset_info = json_decode($dataset_info);
+
+  if (empty($dataset_info) || empty($dataset_info->id)) {
+    // Something wrong. Exit before change any node.
+    return;
+  }
+
+  $created_or_updated = "";
+  if (empty($result)) {
+    // No matching id. Create a new node.
+    $node = new stdClass();
+    $node->type = 'data';
+    node_object_prepare($node);
+    $created_or_updated = "created";
+  }
+  else {
+    // Node exists, with different metadata_modified. Let us modify it.
+    $node = node_load($result['nid']);
+    $created_or_updated = "updated";
+  }
+
+  $node->title = substr($dataset_info->title, 0, 255);
+  $node->body['und'][0]['value'] = isset($dataset_info->notes)?$dataset_info->notes:"";
+  $node->status = 1;
+  $node->field_dataset_id['und'][0]['value'] = $item['id'];
+  $node->field_agency['und'][0]['value'] = isset($dataset_info->extras->{"responsible-party"})?substr($dataset_info->extras->{"responsible-party"}, 255):"";
+  $node->field_dataset_sync_time['und'][0]['value'] = time();
+
+  $node->group_audience['und'] = array(); //Have to reset it first, otherwise old group is not going to be removed.
+  // Find drupal gid for equivalent ckan group
+  $groups_ckan = isset($dataset_info->groups)?$dataset_info->groups:array();
+  $gids = og_get_all_group();
+  foreach ($groups_ckan as $group_ckan) {
+    foreach ($gids as $gid) {
+      $variable_name = "ckan_sync_gid_" . $gid;
+      $group_name = trim(variable_get($variable_name, ''));
+      if ($group_name == $group_ckan) {
+        $node->group_audience['und'][] = array(
+          'gid' => $gid,
+          'state' => 1,// TODO what for?
+          'created' => time(),// TODO what for?
+        );
+        break;
+      }
+    }
+  }
+  // hash some fields to fill metadata_modified, which has been re-purposed to hold hash value of certain dataset fields
+  // id, metadata_modified, and groups
+  $value_1 = $item['id'];
+  $value_2 = isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"";
+  sort($groups_ckan);
+  $value_3 = serialize($groups_ckan);
+  $node->field_ckan_metadata_modified['und'][0]['value'] = md5($value_1 . $value_2 . $value_3);
+
+  // Now keywords
+  if (isset($node->field_dataset_vocabulary['und'])) {
+    $node->field_dataset_vocabulary['und'] = array(); // clear existing keywords, if any.
+  }
+  $keywords = isset($dataset_info->extras->tags)?$dataset_info->extras->tags:"";
+  if (strpos($keywords, "REQUIRED:") === 0) {
+    $keywords = "";
+  }
+  $keywords = explode(',', $keywords);
+
+  // Find vocabulary for field_dataset_vocabulary
+  $field_info = field_info_field('field_dataset_vocabulary');
+  $vocabulary = $field_info['settings']['allowed_values'][0]['vocabulary'];
+  $vocabularies = taxonomy_vocabulary_get_names();
+  $vid = $vocabularies[$vocabulary]->vid;
+
+  foreach ($keywords as $keyword) {
+    $keyword = trim($keyword);
+    $terms = taxonomy_get_term_by_name($keyword, $vocabulary);
+    if (empty($terms)) {
+      // New phrase. Create a new term.
+      taxonomy_term_save((object) array('name'=>$keyword,'vid'=>$vid));
+      $terms = taxonomy_get_term_by_name($keyword, $vocabulary);
+    }
+    if (!empty($terms)) {
+      foreach ($terms as $key => $value) {
+        $node->field_dataset_vocabulary['und'][] = array('tid' => $key);
+        break; // one and only one will do.
+      }
+    }
+  }
+
+  node_save($node);
+  // Keep node->changed meaningful when updating node.
+  if (!empty($result)) {
+    $ckan_metadata_modified = isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"";
+    $ckan_metadata_modified = $ckan_metadata_modified?strtotime($ckan_metadata_modified):0;
+    $sql = "
+      UPDATE {node} n SET changed = (SELECT GREATEST(n.created,:metadata_modified)) WHERE n.nid = :nid
+    ";
+    db_query($sql, array(':metadata_modified' => $ckan_metadata_modified, 'nid' => $result['nid']));
+watchdog('', isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"");
+  }
+  watchdog('ckan_sync_item', "Node $node->nid $created_or_updated.");
+
+}
+
+function ckan_sync_queue_delete_worker($nid) {
+  node_delete($nid);
+  watchdog('ckan_sync_item', "Node $nid deleted.");
+}
+
+/**
+ * Delete all datasets changed before given timestamp.
+ */
+function ckan_sync_delete_outdated($timestamp) {
+
+  $sql = "
+    SELECT 
+      n.nid
+    FROM 
+      {node} n 
+    LEFT JOIN 
+      {field_data_field_dataset_id} f 
+    ON 
+      n.nid = f.entity_id 
+    LEFT JOIN 
+      {field_data_field_dataset_sync_time} t 
+    ON
+      n.nid = t.entity_id
+    WHERE 
+      n.type = 'data' 
+    AND 
+      #Only delete ckan dataset or dataset with empty id.
+      (
+      length(f.field_dataset_id_value) >= 32
+      OR
+      f.field_dataset_id_value IS NULL
+      OR
+      f.field_dataset_id_value = ''
+      )
+    AND 
+      (
+      t.field_dataset_sync_time_value < :timestamp
+      OR
+      t.field_dataset_sync_time_value IS NULL
+      OR
+      t.field_dataset_sync_time_value = ''
+      )
+  ";
+
+  $result = db_query($sql, array(':timestamp' => $timestamp));
+
+  $queue_delete = DrupalQueue::get('ckan_sync_queue_delete');
+  foreach ($result as $row) {
+    $queue_delete->createItem($row->nid);
+  } 
+
+  return $queue_delete->numberOfItems();
+
+}
+
+/**
+ * Get a list of ckan community names.
+ */
+function ckan_sync_get_ckan_communities() {
+  // Groups needed to query ckan datasets
+  $gids = og_get_all_group();
+
+  $ckan_groups = array();
+  foreach ($gids as $gid) {
+    $variable_name = "ckan_sync_gid_" . $gid;
+    $group_name = trim(variable_get($variable_name, ''));
+    if (strlen($group_name) > 0) {
+      $ckan_groups[] = $group_name;
+    }
+  }
+  // Remove possible duplicate entries.
+  $ret = array_unique($ckan_groups);
+  return $ret;
+}
+
+
+/**
+ * Get count of pages for each community.
+ */
+function ckan_sync_get_ckan_pages($community) {
+  $pages = 0;
+  if (empty($community)) {
+    return $pages;
+  }
+
+  $url = trim(variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/'));
+  // TODO returns to seleted fields(id,metadata_modified,groups) once api supports it.
+  //$url = $url . 'api/2/search/dataset?qjson={"fl":"id,metadata_modified","private":"false","groups":"'.$group_name.'","limit":"1000000","sort":"metadata_modified%20asc"}';
+  $url = $url . "api/action/package_search?q=groups:$community+AND+dataset_type:dataset&rows=0";
+  $response = drupal_http_request($url);
+
+  if (isset($response->error) || $response->status_message != 'OK') {
+    watchdog('ckan_sync', "Error: url is $url, message is $response->error", array(), WATCHDOG_CRITICAL);
+    return $pages;
+  }
+
+  $ret = json_decode($response->data, true);
+
+  if (!$ret['success']) {
+    watchdog('ckan_sync', "Error: url is $url, message is " . print_r($ret['error'], true), array(), WATCHDOG_CRITICAL);
+    return $pages;
+  }
+
+  $total = $ret['result']['count'];
+  $limit = variable_get('ckan_sync_items_per_page', 50);
+  $pages = ceil($total/$limit);
+  return $pages;
+
+}
+
+/**
+ * Return a list of valid hours in the format of hh:mm:ss.
+ */
+function ckan_sync_get_hour_list($type) {
+  $suffix = $type=="start"?":00:00":":59:59";
+  $ret = array();
+  for ($i=0; $i < 24; $i++) {
+    $hh = str_pad($i, 2, "0", STR_PAD_LEFT);
+    $ret[] = $hh . $suffix;
+  }
+  return drupal_map_assoc($ret);
+}
+
+

@@ -1,0 +1,857 @@
+<?php
+
+/**
+ * Implementation of hook_menu().
+ */
+function ckan_metric_menu() {
+  $items = array();
+  $items['admin/config/development/ckan_metric_crons'] = array(
+    'title' => 'Configure CKAN Metric Cron Job Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('ckan_metric_crons_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
+  return $items;
+}
+
+/**
+ * The form to provide a link to cron.php.
+ */
+function ckan_metric_crons_form($form, &$form_state) {
+
+  $form['description'] = array(
+    '#prefix' => "<div>",
+    '#suffix' => "</div>",
+    '#markup' => t("Run daily cron job to update metric table from CKAN (and Zend)."),
+  );
+
+
+  $form['status'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cron status information'),
+  );
+
+  // Need to use Drupal timezone instead of system timezone.
+  // Ignore PHP strict notice if time zone has not yet been set in the php.ini configuration.
+  $timezone_system = @date_default_timezone_get();
+  $timezone_drupal = variable_get('date_default_timezone', $timezone_system);
+  $form['status']['last'] = array(
+    '#markup' => '<div>' . t('New CKAN queue will be created the first time cron runs after %time (%timezone time, %seconds seconds from now).' . '</div>',
+      array(
+        '%time' => format_date(variable_get('ckan_metric_next_execution', time()), 'medium', '', $timezone_drupal),
+        '%timezone' => $timezone_drupal,
+        '%seconds' => variable_get('ckan_metric_next_execution', time()) - time(),
+      )
+    ),
+  );
+  $queue = DrupalQueue::get('ckan_metric_queue');
+  $form['status']['current_cron_queue_status'] = array(
+    '#markup' => '<div>' . t('There are currently %queue agencies sitting in current queue to be updated.',
+      array(
+        '%queue' => $queue->numberOfItems(),
+      )) . '</div>',
+  );
+
+
+  $form['cron_run'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Run cron manually'),
+  );
+  $form['cron_run']['cron_reset'] = array(
+    '#prefix' => "<div>",
+    '#suffix' => "</div>",
+    '#markup' => t("Run ckan_metric's cron regardless of whether interval has expired."),
+  );
+  $form['cron_run']['cron_trigger'] = array(
+    '#type' => 'submit',
+    '#value' => t('Run cron now'),
+    '#submit' => array('ckan_metric_crons_run_submit'),
+  );
+  $form['cron_run']['cron_tip'] = array(
+    '#markup' => t('Tip: To do a manual CKAN sync, make sure to select AND SAVE a wide time frame below. Otherwise the button will do nothing except executing existing queue items.'),
+    '#prefix' => t('<div>'),
+    '#suffix' => t('</div>'),
+  );
+
+  $form['cron_structure_source'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Server address to get the metric organization structure'),
+  );
+  $form['cron_structure_source']['ckan_metric_organization_server_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Organization Server Address'),
+    '#description' => t('The address to get the organization structure in a JSON format.'),
+    '#default_value' => variable_get('ckan_metric_organization_server_address', 'http://domain.name/path.json'),
+  );
+
+
+  $form['cron_setting'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Daily Cron Job Settings'),
+  );
+  $form['cron_setting']['ckan_metric_time_length'] = array(
+    '#type' => 'select',
+    '#title' => t('Cron running length'),
+    '#description' => t('Max runtime per cron run.'),
+    '#default_value' => variable_get('ckan_metric_time_length', 5),
+    '#options' => array(
+      5 => t('5 seconds'),
+      20 => t('20 seconds'),
+      60 => t('1 minute'),
+      300 => t('5 minutes'),
+    ),
+  );
+
+  $form['cron_setting']['ckan_metric_time_frame_start'] = array(
+    '#type' => 'select',
+    '#title' => t('Daily time frame - start'),
+    '#default_value' => variable_get('ckan_metric_time_frame_start', "03:00:00"),
+    '#options' => ckan_metric_get_hour_list('start'),
+  );
+
+  $form['cron_setting']['ckan_metric_time_frame_end'] = array(
+    '#type' => 'select',
+    '#title' => t('Daily time frame - end'),
+    '#description' => t('Starting and ending time for daily CKAN sync cron job. In %timezone time.',
+      array('%timezone' => $timezone_drupal,)
+    ),
+    '#default_value' => variable_get('ckan_metric_time_frame_end', "03:59:59"),
+    '#options' => ckan_metric_get_hour_list('end'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Allow user to directly execute cron, optionally forcing it.
+ */
+function ckan_metric_crons_run_submit($form, &$form_state) {
+  variable_set('ckan_metric_next_execution', 0);
+
+  if (drupal_cron_run()) {
+    drupal_set_message(t('Cron ran successfully.'));
+  }
+  else {
+    drupal_set_message(t('Cron run failed.'), 'error');
+  }
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+function ckan_metric_cron() {
+  // Is it time? we only do it in the early morning time frame.
+  $b_istimeframe = FALSE;
+  // Need to use Drupal timezone instead of system timezone.
+  // Ignore PHP strict notice if time zone has not yet been set in the php.ini configuration.
+  $timezone_system = @date_default_timezone_get();
+  $timezone_drupal = variable_get('date_default_timezone', $timezone_system);
+  date_default_timezone_set($timezone_drupal);
+
+  // Get the hour according to Drupal default timezone.
+  $current_time = time();
+  $today = date('Y-m-d', $current_time);
+  $time_frame_start = variable_get('ckan_metric_time_frame_start', "03:00:00"); // default 3am
+  $time_frame_end   = variable_get('ckan_metric_time_frame_end', "03:59:59"); // default 4am
+  if ($current_time >= strtotime($today . " " . $time_frame_start) && $current_time < strtotime($today . " " . $time_frame_end)) {
+    $b_istimeframe = TRUE;
+  }
+  // What is next execution time
+  if($current_time < strtotime($today . " " . $time_frame_start)) { // earlier than $time_frame_start
+    $next_execution_timestamp = strtotime($today . " " . $time_frame_start);
+  }
+  else { // Passed today tiemframe. wait for tomorrow.
+    $tomorrow = date('Y-m-d', strtotime('+1 day', $current_time));
+    $next_execution_timestamp = strtotime($tomorrow . " " . $time_frame_start);
+  }
+  // Set back to system timezone.
+  date_default_timezone_set($timezone_system);
+
+  // Is queue empty?
+  $b_emptyqueue = FALSE;
+  $queue = DrupalQueue::get('ckan_metric_queue');
+  $item_count = $queue->numberOfItems();
+  if (empty($item_count)) {
+    $b_emptyqueue = TRUE;
+  }
+
+  // Is time for new execution yet?
+  $b_timefornewexecution = FALSE;
+  
+  if ($current_time >= variable_get('ckan_metric_next_execution', 0)) {
+    $b_timefornewexecution = TRUE;
+  }
+
+  // Set next execution time to be tomorrow 3am (today or tomorrow);
+  variable_set('ckan_metric_next_execution', $next_execution_timestamp);
+
+  if ($b_istimeframe && $b_emptyqueue && $b_timefornewexecution) {
+    ckan_metric_sync();
+  }
+
+}
+
+//
+function ckan_metric_get_taxonomies() {
+
+  $url = trim(variable_get('ckan_metric_organization_server_address', 'http://domain.name/path.json'));
+  $response = drupal_http_request($url);
+
+  if (isset($response->error) || $response->status_message != 'OK') {
+    watchdog('ckan_metric', "Error: url is $url, message is $response->error", array(), WATCHDOG_CRITICAL);
+    return;
+  }
+
+  $ret = json_decode($response->data, TRUE);
+  $taxonomies = $ret['taxonomies'];
+
+  return $taxonomies;
+}
+
+//
+function ckan_metric_convert_structure($taxonomies) {
+  $ret = array();
+  // This should be the ONLY loop that go thru all taxonomies.
+  foreach ($taxonomies as $taxonomy) {
+    $taxonomy = $taxonomy['taxonomy'];
+    if (strlen($taxonomy['unique id']) == 0) { // bad ones
+      continue;
+    }
+    if ($taxonomy['unique id'] != $taxonomy['term']) { // ignore 3rd level ones
+      continue;
+    }
+    if (!isset($ret[$taxonomy['vocabulary']])) { // Make sure we got $ret[$sector]
+      $ret[$taxonomy['vocabulary']] = array();
+    }
+    if (strlen($taxonomy['Sub Agency']) != 0) { // it is subagency
+      if (!isset($ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']])) {
+        // Make sure we got $ret[$sector][$unit]
+        $ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']] = array(
+          // use [ ] to indicate this is agency with subs. e.g [,sub_id]
+          'id' => "[," . $taxonomy['unique id'] . "]",
+          'subs' => array(),
+        );
+      }
+      else {
+        // Add sub id to existing agency entry, e.g. [id,sub_id1,sub_id2] or [,sub_id1,sub_id2]
+        $ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']]['id'] = "[" . trim($ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']]['id'],"[]") . "," . $taxonomy['unique id'] ."]";
+      }
+      // Add term to parent's subs
+      $ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']]['subs'][$taxonomy['Sub Agency']] = array(
+        'id' => $taxonomy['unique id'],
+      ); 
+    }
+    else { // This is agecny
+      if (!isset($ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']])) {
+        // Has not been set by its subunits before
+        $ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']] = array(
+          'id' => $taxonomy['unique id'], // leave it without [ ] if no subs. 
+          'subs' => array(),
+        );
+      }
+      else {
+        // Has been added by subunits before. so let us change it from [,sub_id1,sub_id2] to [id,sub_id1,sub_id2]
+        $ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']]['id'] = "[" . $taxonomy['unique id'] . trim($ret[$taxonomy['vocabulary']][$taxonomy['Federal Agency']]['id'], "[]") . "]";
+      }
+
+    }
+
+  }
+
+
+  return $ret;
+
+  // old one. ignore.
+  $ret = array();
+  // This should be the ONLY loop that go thru all taxonomies.
+  foreach ($taxonomies as $taxonomy) {
+    $taxonomy = $taxonomy['taxonomy'];
+    if (!isset($ret[$taxonomy['vocabulary']])) { // Make sure we got $ret[$sector]
+      $ret[$taxonomy['vocabulary']] = array();
+    }
+    if ($taxonomy['parent'] != "") {
+      if (!isset($ret[$taxonomy['vocabulary']][$taxonomy['parent']])) {
+        // Make sure we got $ret[$sector][$unit]
+        $ret[$taxonomy['vocabulary']][$taxonomy['parent']] = array(
+          'subs' => array(),
+        );
+      }
+      // Add term to parent's subs
+      $ret[$taxonomy['vocabulary']][$taxonomy['parent']]['subs'][$taxonomy['term']] = array(
+        'id' => $taxonomy['unique_id'],
+        'abbr' => $taxonomy['abbr'],
+      ); 
+    }    
+    else { // This is unit level
+      if (!isset($ret[$taxonomy['vocabulary']][$taxonomy['term']])) {
+        // Has not been set by its subunits before
+        $ret[$taxonomy['vocabulary']][$taxonomy['term']] = array(
+          'subs' => array(),
+        );
+      }
+      $ret[$taxonomy['vocabulary']][$taxonomy['term']]['id'] = $taxonomy['unique_id'];
+      $ret[$taxonomy['vocabulary']][$taxonomy['term']]['abbr'] = $taxonomy['abbr'];
+    }
+  }
+
+  return $ret;
+}
+
+/**
+ * Get Agency/Subagency metric count.
+ */
+function ckan_metric_get_metric_count() {
+  $sql = "
+    SELECT * FROM dataset_counts ORDER BY sort_order, secondary_sort_order, subagency_name
+  ";
+
+  // Use zend db
+  db_set_active('data_gov');
+  $result = db_query($sql);
+  // Go back to the default database,
+  db_set_active();
+
+  $ret = array();
+  foreach ($result as $row) {
+    $ret[] = $row;
+  } 
+  return $ret;
+}
+
+/**
+* Function to sync CKAN.
+*/
+function ckan_metric_sync() {
+
+  $batch_timestamp = time();
+
+  //Update zend count first
+  $zend_result = ckan_metric_update_zend();
+  if (!$zend_result) {
+    watchdog('ckan_metric', "Batch $batch_timestamp failed.", array(), WATCHDOG_CRITICAL);
+    return;
+  }
+  ckan_metric_cleanup($batch_timestamp, 'zend');
+  watchdog('ckan_metric', "Batch $batch_timestamp updated $zend_result zend records.");
+
+  // Update ckan count now
+  // Get organization structure first
+  $taxonomies = ckan_metric_get_taxonomies();
+  if (empty($taxonomies)) {
+    watchdog('ckan_metric', "Batch $batch_timestamp stopped.", array(), WATCHDOG_CRITICAL);
+    return;
+  }
+  $structure = ckan_metric_convert_structure($taxonomies);
+  $count = 0;
+
+  if (!empty($structure['Federal Organization'])) {
+    $queue = DrupalQueue::get('ckan_metric_queue');
+    $queue->createItem(0); // Start indicator
+
+    // Only do Federal Organization for now
+    foreach ($structure['Federal Organization'] as $unit => $unit_info) {
+      $item = array(
+        'name' => $unit,
+        'id' => $unit_info['id'],
+      );
+      $queue->createItem($item);
+      foreach ($unit_info['subs'] as $subunit => $subunit_info) {
+        $item = array(
+          'parent_unit' => $unit,
+          'name' => $subunit,
+          'id' => $subunit_info['id'],
+        );
+        $queue->createItem($item); 
+      }
+    }
+    $count = $queue->numberOfItems() - 1; // 1 is the start indicator
+    $queue->createItem($batch_timestamp); // End indicator.
+  }
+
+
+  watchdog('ckan_metric', "Batch $batch_timestamp queued  $count organizations for CKAN metric count sync.");
+
+}
+
+//
+function ckan_metric_update_zend(){
+
+  $sql = "
+    SELECT 
+      agency_name,
+      agency_abbr,
+      subagency_name,
+      subagency_abbr,
+      agency_id,
+      IFNULL(subagency_id, 0) AS subagency_id,
+      raw,
+      high_value_raw,
+      tools,
+      high_value_tools,
+      is_cfo,
+      latest_update
+    FROM
+      {dataset_counts}
+    ORDER BY sort_order, secondary_sort_order, subagency_name
+    ;
+  ";
+
+  // Use zend db
+  db_set_active('data_gov');
+  $result = db_query($sql);
+  // Go back to the default database,
+  db_set_active();
+
+  $zend_data = $result->fetchAll();
+  if (empty($zend_data)) {
+    watchdog('ckan_metric', 'Error: zend dataset_counts returns no data.', array(), WATCHDOG_CRITICAL);
+    return;
+  }
+
+  // Update(or create) a node for each entry.
+  foreach ($zend_data as $zend) {
+    $agency_sql = "
+      SELECT nid FROM {node} n WHERE n.type = 'metric_organization' AND n.title = :agency LIMIT 1;
+    ";
+    $agency_result = db_query($agency_sql, array(':agency' => $zend->agency_name))->fetchAssoc();
+
+    if (empty($zend->subagency_name)) {
+      // This is agency entry, not subagency entry.
+      // Let us update(create) this node.
+      if (empty($agency_result)) {
+        $node = new stdClass();
+        $node->type = 'metric_organization';
+        node_object_prepare($node);
+      }
+      else {
+        $node = node_load($agency_result['nid']);
+      }
+      ckan_metric_update_node_zend($node, $zend);
+    }
+    else {
+      // This is subagency entry. since it alwasy ordered after agency, no way result is empty.
+      if (empty($agency_result)) {
+        watchdog('ckan_metric', 'Error: when updating zend record: ' . print_r($zend, TRUE), array(), WATCHDOG_CRITICAL);
+        return;
+      }
+      $parent_nid = $agency_result['nid'];
+      $subagency_sql = "
+        SELECT nid 
+        FROM {node} n 
+        JOIN {field_data_field_metric_parent_organization} p
+        ON n.nid = p.entity_id
+        WHERE n.type = 'metric_organization' 
+        AND n.title = :subagency
+        AND p.field_metric_parent_organization_target_id = :parent_nid
+        LIMIT 1;
+      ";
+      $subagency_result = db_query($subagency_sql, array(':subagency' => $zend->subagency_name, ':parent_nid' => $parent_nid))->fetchAssoc();
+      if (empty($subagency_result)) {
+        $node = new stdClass();
+        $node->type = 'metric_organization';
+        node_object_prepare($node);
+      }
+      else {
+        $node = node_load($subagency_result['nid']);
+      }
+      ckan_metric_update_node_zend($node, $zend, $parent_nid);
+    }
+  }
+
+  return count($zend_data);
+}
+
+//
+function ckan_metric_update_node_ckan(&$node, $item, $parent_nid=0) {
+  $is_unit = empty($parent_nid)?TRUE:FALSE;
+
+  $node->status = 1;
+
+  if ($is_unit) { //unit level
+    $node->field_metric_parent_organization = array();
+  }
+  else {
+    $node->field_metric_parent_organization['und'][0]['target_id'] = $parent_nid;
+  }
+
+  $node->title = $item['name'];
+
+  // Rely on zend db to determin is_cfo or not
+  $sql = "select full_name from organizations where is_cfo = 'Y'";
+  db_set_active('data_gov');
+  $result = db_query($sql);
+  // Go back to the default database,
+  db_set_active();
+  $cfo = array();
+  foreach ($result as $row) {
+    $cfo[] = $row->full_name;
+  } 
+
+  $is_cfo = FALSE;
+  $name_to_test = $is_unit?$item['name']:$item['parent_unit'];
+  if (in_array($name_to_test, $cfo)) {
+    $is_cfo = TRUE;
+  }
+
+  $node->field_metric_sector['und'][0]['value'] = $is_cfo?'Federal':'Other';
+
+  $node->field_metric_count_geodata['und'][0]['value'] = $item['ckan']['count'];
+
+  if (!$is_unit) {
+    $latest_entry = $item['ckan']['count']?$item['ckan']['latest_entry']:NULL;
+    if (!isset($node->field_metric_latest_entry['und'][0]['value'])) {
+      $node->field_metric_latest_entry['und'][0]['value'] = $latest_entry;
+    }
+    $latest_entry = strcmp($node->field_metric_latest_entry['und'][0]['value'],$latest_entry) > 0 ? $node->field_metric_latest_entry['und'][0]['value'] : $latest_entry;
+    $node->field_metric_latest_entry['und'][0]['value'] = $latest_entry ;
+  }
+  else {
+    // Handled by subunit below.
+  }
+
+  $node->field_ckan_unique_id['und'][0]['value'] = $item['id'];
+
+  $node->field_metric_sync_timestamp['und'][0]['value'] = time();
+  node_save($node);
+
+  if (!$is_unit) {
+    // rollup count for parent unit
+    $unit_node = node_load($parent_nid);
+    // Seems the geodata count value has been cached by previous node_load, and no way to reset the cache, so let us do it the hard way.
+    //$unit_node->field_metric_count_geodata['und'][0]['value'] += $item['ckan']['count'];
+    $sql = "
+      SELECT f.field_metric_count_geodata_value FROM {field_data_field_metric_count_geodata} f WHERE f.entity_id = :parent_nid
+    ";
+    $result = db_query($sql, array(':parent_nid' => $parent_nid))->fetchCol();
+    $count_geodata = empty($result)?0:$result[0];
+    $unit_node->field_metric_count_geodata['und'][0]['value'] = $count_geodata + $item['ckan']['count'];
+
+    $latest_entry = $item['ckan']['count']?$item['ckan']['latest_entry']:NULL;
+    if (!isset($unit_node->field_metric_latest_entry['und'][0]['value'])) {
+      $unit_node->field_metric_latest_entry['und'][0]['value'] = $latest_entry;
+    }
+    $latest_entry = strcmp($unit_node->field_metric_latest_entry['und'][0]['value'],$latest_entry) > 0 ? $unit_node->field_metric_latest_entry['und'][0]['value'] : $latest_entry;
+    $unit_node->field_metric_latest_entry['und'][0]['value'] = $latest_entry ;
+    node_save($unit_node);
+  }
+
+}
+
+//
+function ckan_metric_update_node_zend(&$node, $zend, $parent_nid=0) {
+  $node->status = 1;
+
+  if (!$parent_nid) { // Main agency
+    $node->title = $zend->agency_name;
+    $node->field_metric_abbr['und'][0]['value'] = $zend->agency_abbr;
+    $node->field_metric_parent_organization = array();
+  }
+  else { // Subagency
+    $node->title = $zend->subagency_name;
+    $node->field_metric_abbr['und'][0]['value'] = $zend->subagency_abbr;
+    $node->field_metric_parent_organization['und'][0]['target_id'] = $parent_nid;
+  }
+
+  $node->field_metric_sector['und'][0]['value'] = $zend->is_cfo == 'Y'?'Federal':'Other';
+
+  $node->field_metric_count_raw['und'][0]['value'] = $zend->raw;
+  $node->field_metric_count_tools['und'][0]['value'] = $zend->tools;
+  $node->field_metric_count_raw_high['und'][0]['value'] = $zend->high_value_raw;
+  $node->field_metric_count_tools_high['und'][0]['value'] = $zend->high_value_tools;
+
+  $latest_entry = $zend->latest_update;
+  if (!empty($node->field_metric_latest_entry)) {
+    $latest_entry = strcmp($node->field_metric_latest_entry['und'][0]['value'],$latest_entry) > 0 ? $node->field_metric_latest_entry['und'][0]['value'] : $latest_entry;
+  }
+  $node->field_metric_latest_entry['und'][0]['value'] = $latest_entry ;
+  $node->field_zend_agency_id['und'][0]['value'] = $zend->agency_id;
+  $node->field_zend_subagency_id['und'][0]['value'] = $zend->subagency_id;
+  $node->field_metric_sync_timestamp['und'][0]['value'] = time();
+  node_save($node);
+}
+
+
+/**
+ * Get ckan info for the organization name.
+ */
+function ckan_metric_get_ckan_info($organization) {
+
+  $url = trim(variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/'));
+  $url = $url . "api/action/package_search?q=organization:$organization+AND+dataset_type:dataset&rows=1&sort=metadata_modified+desc"; 
+  $response = drupal_http_request($url);
+
+  if (isset($response->error) || $response->status_message != 'OK') {
+    watchdog('ckan_metric', "Error: url is $url, msg is " . $response->error, array(), WATCHDOG_CRITICAL);
+    return;
+  }
+
+  $ret = json_decode($response->data, true);
+  $ckan = array();
+  $ckan['count'] = $ret['result']['count'];
+  if ($ckan['count']) {
+    $ckan['latest_entry'] = $ret['result']['results'][0]['metadata_modified'];
+  }
+
+  return $ckan;
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function ckan_metric_cron_queue_info() {
+  $queues['ckan_metric_queue'] = array(
+    'worker callback' => 'ckan_metric_queue_worker',
+    'time' => variable_get('ckan_metric_time_length', 5), // 5 second max runtime per cron run.
+  );
+
+  return $queues;
+}
+
+function ckan_metric_queue_worker($item) {
+
+  if (is_int($item)) {
+    if ($item == 0) { // first item
+      ckan_metric_cleanup($item, 'ckan');
+    }
+    else { // This is last item, a timestamp.
+      // Clean up metric organizations which are sync'ed before queue creation timestamp.
+      //ckan_metric_cleanup($item, 'final'); // final not implemented. can unpublish all outdated nodes.
+      $time_took = time() - $item;
+      watchdog('ckan_metric', "Batch $item queue completed, took $time_took seconds.");
+    }
+
+    return;
+  }
+
+  if (strlen($item['id']) == 0) {
+    // Empty id, cant do ckan.
+    return;
+  }
+
+  // Get id from [id,sub_id1,sub_id2...]. No effect for plain ids.
+  $ckan_ids = explode(",", trim($item['id'], "[]"));
+  $ckan_id = $ckan_ids[0];
+
+  if (strlen($ckan_id) == 0) {
+    // id is [,sub_id1,sub_id2...], which means some subs come without a valid parent agency id.
+    // let us pass an empty ckan value just to create the parent agency node.
+    $ckan = array('count' => 0);
+  }
+  else {
+    $ckan = ckan_metric_get_ckan_info($ckan_id);
+    if (empty($ckan)) {
+      // CKAN error, logged in watchdog.
+      return;
+    }
+  }
+
+  $item['ckan'] = $ckan;
+
+  // Update(or create) a node.
+  if (empty($item['parent_unit'])) {// This is unit level
+    $unit_sql = "
+      SELECT nid FROM {node} n WHERE n.type = 'metric_organization' AND n.title = :unit LIMIT 1;
+    ";
+    $unit_result = db_query($unit_sql, array(':unit' => $item['name']))->fetchAssoc();
+    if (empty($unit_result)) {
+      $node = new stdClass();
+      $node->type = 'metric_organization';
+      node_object_prepare($node);
+    }
+    else {
+      $node = node_load($unit_result['nid']);
+    }
+    // Update the unit title level.
+    $item['ckan']['count'] = 0;
+    ckan_metric_update_node_ckan($node, $item);
+
+    // Need to create an extra on for Department/Agency Level entry.
+    $extra_name = "Department/Agency Level";
+    $parent_nid = $unit_result['nid'];
+    $extra_sql = "
+      SELECT nid 
+      FROM {node} n 
+      JOIN {field_data_field_metric_parent_organization} p
+      ON n.nid = p.entity_id
+      WHERE n.type = 'metric_organization' 
+      AND n.title = :extra_name
+      AND p.field_metric_parent_organization_target_id = :parent_nid
+      LIMIT 1;
+    ";
+    $extra_result = db_query($extra_sql, array(':extra_name' => $extra_name, ':parent_nid' => $parent_nid))->fetchAssoc();
+    if (empty($extra_result)) {
+      $node = new stdClass();
+      $node->type = 'metric_organization';
+      node_object_prepare($node);
+    }
+    else {
+      $node = node_load($extra_result['nid']);
+    }
+    $item['parent_unit'] = $item['name'];
+    $item['name'] = $extra_name;
+    $item['id'] = $ckan_id;
+    ckan_metric_update_node_ckan($node, $item, $parent_nid);
+
+  }
+  else {  // This is subunit
+    $parent_sql = "
+      SELECT nid FROM {node} n WHERE n.type = 'metric_organization' AND n.title = :parent_unit LIMIT 1;
+    ";
+    $parent_result = db_query($parent_sql, array(':parent_unit' => $item['parent_unit']))->fetchAssoc();
+    if (empty($parent_result)) {
+      // Not supposed to happen since parent always comes before this.
+      watchdog('ckan_metric', "Batch $item error. Parent unit " . $item['parent_unit'] ." does not exists.");
+      return;
+    }
+    $parent_nid = $parent_result['nid'];
+    $subunit_sql = "
+      SELECT nid 
+      FROM {node} n 
+      JOIN {field_data_field_metric_parent_organization} p
+      ON n.nid = p.entity_id
+      WHERE n.type = 'metric_organization' 
+      AND n.title = :subunit
+      AND p.field_metric_parent_organization_target_id = :parent_nid
+      LIMIT 1;
+    ";
+    $subunit_result = db_query($subunit_sql, array(':subunit' => $item['name'], ':parent_nid' => $parent_nid))->fetchAssoc();
+    if (empty($subunit_result)) {
+      $node = new stdClass();
+      $node->type = 'metric_organization';
+      node_object_prepare($node);
+    }
+    else {
+      $node = node_load($subunit_result['nid']);
+    }
+
+    ckan_metric_update_node_ckan($node, $item, $parent_nid);
+
+  }
+
+}
+
+
+//$type can be 'zend', 'ckan', 'final'
+function ckan_metric_cleanup($timestamp, $type = 'ckan') {
+  if ($type == "zend") {
+    $sql = "
+      UPDATE 
+        {field_data_field_metric_count_raw} f
+      SET 
+        f.field_metric_count_raw_value = 0
+      WHERE
+        f.entity_id IN
+      (
+        SELECT n.nid 
+        FROM {node} n
+        LEFT JOIN {field_data_field_metric_sync_timestamp} f2
+        ON n.nid = f2.entity_id
+        WHERE
+        n.type = 'metric_organization'
+        AND
+        (
+          f2.field_metric_sync_timestamp_value IS NULL
+          OR
+          f2.field_metric_sync_timestamp_value = 0
+          OR
+          f2.field_metric_sync_timestamp_value < :timestamp
+        )
+      )
+      ;
+      UPDATE 
+        {field_data_field_metric_count_raw_high} f
+      SET 
+        f.field_metric_count_raw_high_value = 0
+      WHERE
+        f.entity_id IN
+      (
+        SELECT n.nid 
+        FROM {node} n
+        LEFT JOIN {field_data_field_metric_sync_timestamp} f2
+        ON n.nid = f2.entity_id
+        WHERE
+        n.type = 'metric_organization'
+        AND
+        (
+          f2.field_metric_sync_timestamp_value IS NULL
+          OR
+          f2.field_metric_sync_timestamp_value = 0
+          OR
+          f2.field_metric_sync_timestamp_value < :timestamp
+        )
+      )
+      ;
+      UPDATE 
+        {field_data_field_metric_count_tools} f
+      SET 
+        f.field_metric_count_tools_value = 0
+      WHERE
+        f.entity_id IN
+      (
+        SELECT n.nid 
+        FROM {node} n
+        LEFT JOIN {field_data_field_metric_sync_timestamp} f2
+        ON n.nid = f2.entity_id
+        WHERE
+        n.type = 'metric_organization'
+        AND
+        (
+          f2.field_metric_sync_timestamp_value IS NULL
+          OR
+          f2.field_metric_sync_timestamp_value = 0
+          OR
+          f2.field_metric_sync_timestamp_value < :timestamp
+        )
+      )
+      ;
+      UPDATE 
+        {field_data_field_metric_count_tools_high} f
+      SET 
+        f.field_metric_count_tools_high_value = 0
+      WHERE
+        f.entity_id IN
+      (
+        SELECT n.nid 
+        FROM {node} n
+        LEFT JOIN {field_data_field_metric_sync_timestamp} f2
+        ON n.nid = f2.entity_id
+        WHERE
+        n.type = 'metric_organization'
+        AND
+        (
+          f2.field_metric_sync_timestamp_value IS NULL
+          OR
+          f2.field_metric_sync_timestamp_value = 0
+          OR
+          f2.field_metric_sync_timestamp_value < :timestamp
+        )
+      )
+      ;
+    ";
+  }
+  else { //ckan: reset all to 0.
+    $sql = "
+      UPDATE 
+        {field_data_field_metric_count_geodata} f
+      SET 
+        f.field_metric_count_geodata_value = 0
+    ";
+  }
+
+  db_query($sql, array(':timestamp' => $timestamp));
+}
+
+/**
+ * Return a list of valid hours in the format of hh:mm:ss.
+ */
+function ckan_metric_get_hour_list($type) {
+  $suffix = $type=="start"?":00:00":":59:59";
+  $ret = array();
+  for ($i=0; $i < 24; $i++) {
+    $hh = str_pad($i, 2, "0", STR_PAD_LEFT);
+    $ret[] = $hh . $suffix;
+  }
+  return drupal_map_assoc($ret);
+}

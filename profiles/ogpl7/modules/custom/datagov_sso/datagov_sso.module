@@ -1,0 +1,193 @@
+<?php
+/*
+ * Implements hook_menu()
+ */
+function datagov_sso_menu() {
+  $items['admin/config/people/datagov_sso'] = array(
+    'title' => t('SAML SSO settings'),
+    'description' => 'Configure Single Sign On Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('datagov_sso_admin_settings'),
+    'access arguments' => array('administer SSO'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'sso.admin.inc',
+  );
+
+  $items['user/%user/idm'] = array(
+    'title' => t('Manage SAML Identity'),
+    'page callback' => 'datagov_sso_idm',
+    'page arguments' => array(1),
+    'access callback' => 'datagov_sso_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_access().
+ */
+function datagov_sso_access($account) {
+  global $user;
+  // only allow current users to see Manage SAML Identity Tab
+  if ($user->uid != $account->uid) {
+    return false;
+  }
+
+  // check if uid is associated with openid
+  $result = db_select('authmap', 'a')
+    ->fields('a', array('module', 'uid'))
+    ->condition('module', 'openid','=')
+    ->condition('uid', $account->uid, '=')
+    ->execute()
+    ->fetchAssoc();
+
+  // hide roles for openid users
+  if ($result) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function datagov_sso_permission() {
+  return array(
+    'administer SSO' => array(
+      'title' => t('Administer SSO'),
+      'description' => t('Configure Single Sign On settings'),
+      'restrict access' => TRUE,
+    )
+  );
+}
+
+
+/**
+ * Implements hook_form_alter().
+ *
+ */
+function datagov_sso_form_alter(&$form, &$form_state, $form_id) {
+  switch ($form_id) {
+    case 'user_login':
+    case 'user_login_block':
+      if (variable_get('hide_drupal_login_form', '') == TRUE) {
+          //@todo: not sure if this really disables drupal login, needs to be tested
+          $form['name']['#access'] = FALSE;
+          $form['pass']['#access'] = FALSE;
+          $form['actions']['submit']['#access'] = FALSE;
+          unset($form['#validate']);
+          $form['#submit'] = FALSE;
+      }
+      break;
+
+    // change password reset link
+    case 'user_pass':
+      if (variable_get('password_reset_link', '') != '') {
+        drupal_goto(variable_get('password_reset_link', ''));
+      }
+      break;
+  
+    // change user registration form link only if not registering through openid
+    case 'user_register_form':
+      if (variable_get('registration_page_link', '') != '' && $_GET['q'] != 'openid/authenticate') {
+        drupal_goto(variable_get('registration_page_link', ''));
+      }
+      break;
+
+    // hide display_name fields since it is kept on the idm
+    case 'user_profile_form': 
+      $form['field_display_name'] = array();
+      $mail = $form['#user']->mail;
+      $uid = $form['#user']->uid;
+
+      // check if uid is associated with openid
+      $result = db_select('authmap', 'a')
+        ->fields('a', array('module', 'uid'))
+        ->condition('module', 'openid','=')
+        ->condition('uid', $uid, '=')
+        ->execute()
+        ->fetchAssoc();
+
+      // hide roles for openid users
+      if ($result) {
+        $form['account']['roles'] = array();  
+      }
+  }
+}
+
+/** 
+ * Page callback that redirects saml authenticated users to idm profile page
+ */
+function datagov_sso_idm () {  
+  $idm_profile_link = variable_get('idm_profile_url', '');
+  drupal_goto($idm_profile_link);
+}
+
+/**
+ * This function checks wheather external SAML name and mail have a match in the users table
+ * based on that it makes a decision on weather to provision external user (register)
+ * No matched should be found for the functio to return true.
+ *
+ * @param string $name
+ *  SAML name (user name)
+ * @param string $mail
+ *  SAML mail (user email)
+ *
+ * @return
+ *  true if provisioning possible, false otherwise
+ */
+function is_simplesamlphp_user_provisioning_possible($name, $mail) {
+
+  // check if SAML external name has a match in db
+  $result = db_select('users', 'u')
+    ->fields('u', array('uid', 'name'))
+    ->condition('name', $name,'=')
+    ->execute()
+    ->fetchAssoc();
+
+  if ($result) {
+    //drupal_set_message("there was a matching user name");
+    return false;
+  }
+
+  // check if SAML external mail has a match in db
+  $result = db_select('users', 'u')
+    ->fields('u', array('uid', 'mail'))
+    ->condition('mail', $mail,'=')
+    ->execute()
+    ->fetchAssoc();
+
+  if ($result) {
+    //drupal_set_message("there was a matching email address");
+    return false;
+  } else {
+    //drupal_set_message("there was no matching email address or user name");
+    return true;
+  }
+  
+}
+
+/**
+ * Implements hook_user_view()
+ */
+function datagov_sso_user_view($account, $view_mode, $langcode) {
+  //replace display name with value from SAML assertion
+  $saml_attributes = simplesamlphp_auth_get_attributes();
+  $display_name = $saml_attributes['field_display_name'][0];
+  $account->realname = check_plain($display_name);
+}
+
+/**
+ * Implements hook_menu_alter()
+ */
+ function datagov_sso_menu_alter(&$items) {
+   global $user;
+
+   // disable openID tab in user profile
+   $items['user/%/openid']['access callback'] = FALSE;
+   $items['admin/people/create']['access callback'] = FALSE;
+ }

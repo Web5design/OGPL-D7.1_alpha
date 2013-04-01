@@ -78,6 +78,15 @@
  * @see template_process()
  */
 ?>
+<style>.item-list a{margin:0 3px;} </style>
+<script type="text/javascript">
+    jQuery(function ($) {
+        $(".summary span").removeAttr("style");
+        $("p").removeAttr("style");
+        $(".details span").removeAttr("style")
+    });
+
+</script>
 <div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?> clearfix"<?php print $attributes; ?>>
 
   <?php print render($title_prefix); ?>
@@ -98,15 +107,142 @@
 //      print render($content);
     ?>
 
+	<?php
+	    //code for pagination
+		$mapsperpage = variable_get('mapsperpage');
+		
+		$total_maps = $map_info['total_maps'];
+		// find out total number of pages
+		$total_pages = ceil($total_maps / $mapsperpage);
+		
+		// get the current page or set a default
+		if (isset($_GET['currentpage']) && is_numeric($_GET['currentpage'])) {
+			// cast var as int
+			$currentpage = (int) $_GET['currentpage'];
+		}
+		else {
+			// default page num
+			$currentpage = 1;
+		} // end if
+		
 
-    <div class="map-gallery-wrap">
-      <a target=_blank href="<?php print $map_info['img_href'] ?>">
-        <img class="map-gallery-thumbnail" src="<?php print $map_info['img_src']?>">
-        <div class="map-gallery-caption"><?php print $map_info['title']?></div>
-      </a>
+		// if the current page is greater than the total pages ..
+		if ($currentpage > $total_pages) {
+			// set current page to last page
+			$currentpage  = $total_pages;
+		} // end if
+		
+		// if the current page is less than the first page ..
+		if ($currentpage < 1) {
+			// set the current page to first page
+			$currentpage = 1;
+		} // end if
+
+		// the offset of the list, based on the current page
+		$start = ($currentpage - 1) * $mapsperpage + 1;	
+		
+	?>
+
+  <!--  <div class="map-gallery-wrap">
+	 <?php //for($i=0; $i<$total_maps; $i++): ?>
+	    <div class="map-align">
+		<a target=_blank href="<?php //print $map_info[$i]['img_href'] ?>">
+			<img class="map-gallery-thumbnail" src="<?php //print $map_info[$i]['img_src']?>">
+			<div class="map-gallery-caption"><?php //print $map_info[$i]['title']?></div>
+		</a>
+		</div> -->
+	 <?php //endfor; ?>
+	 
+	 <?php
+		
+		
+		drupal_add_js(drupal_get_path('module', 'arcgis_map') . '/js/jquery.expander.js');
+		$output = "";		
+		
+		if(isset($info)) {
+			$output .= '<div id="infoTitle">';
+		    if($info['type'] == "Map")
+				$output .= "<h2>Map Information</h2>";
+			else
+				$output .= "<h2>Group Information</h2>";
+			
+			$output .= '</div>';			
+			$output .= '<div class="groupImg"><h3><img class="groupThumbnail" src="' . htmlspecialchars_decode($info['thumbnail_src']) . '" title="' . $info['title'] . '">';
+			$output .= htmlspecialchars_decode($info['title']) . '</h3></div>';
+			$output .=  '<div class="groupDesc"><div class="expandable">' . htmlspecialchars_decode($info['description']) . '</div></div>';
+		}
+		$output .= '<br><div id="galleryTitle"><h2>Map Gallery</h2></div>';
+		$output .= '<div class="map-gallery-wrap">';
+		
+
+		for($i=$start-1; $i<$start-1+$mapsperpage; $i++){
+
+			if(isset($map_info[$i])) {
+				$output .= '<div class="map-align">';
+				$output .= '<a target=_blank href="'. $map_info[$i]["img_href"] . '">';
+				$output .= '<img class="map-gallery-thumbnail" src="'. $map_info[$i]["img_src"] . '" title="' . $map_info[$i]["title"] .'">';
+				
+				$output .= '<div class="map-gallery-caption">'. $map_info[$i]["title"] . '</div>';
+				$output .= '</a>';
+				$output .= '</div>';
+			}
+			
+		}
+		$output .= "</div><div class='item-list'><ul class='pager'>";
+		
+		if($total_maps > $mapsperpage) {
+	    // range of num links to show
+		$range = 10;
+		
+		// if not on page 1, don't show back links
+		if ($currentpage > 1) {
+			// show << link to go back to page 1
+			$output .= "<br clear='both'/><li class='pager-first first'><a href='?currentpage=1'><<< FIRST </a></li> ";
+			// get previous page num
+			$prevpage = $currentpage - 1;
+			//  show < link to go back to 1 page
+			$output .= "<li class='pager-previous'><a href='?currentpage=$prevpage'>< PREVIOUS  </a> </li>";
+		} // end if
+		
+		// loop to show links to range of pages around current page
+		for ($x = ($currentpage - $range); $x < (($currentpage + $range) + 1); $x++) {
+			// if its a valid page number...
+			if (($x > 0) && ($x <= $total_pages)) {
+				// if we're on current page...
+				if ($x == $currentpage) {
+					if ($currentpage == 1) {
+						$output .="<br clear='both'/><br/>";
+					}
+					if ($total_pages > 1) {
+						// nighlight it but don't make a link
+						$output .= "<li class='pager-current first'>$x</li>";
+						// if not current page...
+					}
+				}
+				else {
+					// make it a link
+					$output .= "<li class='pager-item'><a href='?currentpage=$x'> $x </a></li>";
+				} // end else
+			} // end if
+		} // end for
+
+		// if not on last page, show forward and last page links
+		if ($currentpage != $total_pages) {
+			// get next page
+			$nextpage = $currentpage + 1;
+			// echo forward link for next page
+			$output .= " <li class='pager-next'> <a href='?currentpage=$nextpage'>NEXT ></a></li> ";
+			// echo forward link for lastpage
+			$output .= " <li class='pager-last last'><a href='?currentpage=$total_pages'>  LAST >>></a> </li>";
+		} // end if
+		/****** end build pagination links ******/
+		}
+		
+		print $output;
+		
+		drupal_add_js('jQuery(document).ready(function () { jQuery("div.expandable").expander( { slicePoint: 600 } ); });', 'inline');
+	 ?>
     </div>
-
-
 
   </div>
 

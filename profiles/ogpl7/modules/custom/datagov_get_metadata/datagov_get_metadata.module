@@ -47,36 +47,46 @@ function datagov_get_metadata_settings() {
     '#maxlength' => 128,
     '#required' => true,
   );
+  $form['ckan_data_access_point'] = array(
+    '#type' => 'textfield',
+    '#title' => t('CKAN Metadata Access Point'),
+    '#description' => t('Access URL to retrieve CKAN metadata in JSON.'),
+    '#default_value' => variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/'),
+    '#size' => 50,
+    '#maxlength' => 128,
+    '#required' => true,
+  );
   return system_settings_form($form);
 }
 
 /**
  * Retrieves metadata in JSON format from admin/geo and pass it through.
  */
-function datagov_get_metadata_page($id, $echo_out = TRUE) {
+function datagov_get_metadata_page($id, $echo_out = TRUE, $use_cache = TRUE) {
   $id = trim($id);
   $id = str_replace('_', '', check_plain($id));
 
-  if (preg_match('/^\d+$/', $id)) {
+  if (preg_match('/^[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/', $id)) {
+    $is_geo = true;
+    $url = variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/');
+    $url .= "api/rest/dataset/$id";
+  }
+  elseif (preg_match('/^\d+$/', $id)) {
     $url = variable_get('raw_data_access_point', 'http://admin.data.gov/dataset/get/id/');
     $url .= $id;
     $is_geo = false;
-  } else if (preg_match('/^[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/', $id)) {
-    // Technically this preg_match is incorrect, as "\w" matches "a-zA-z0-9_" and
-    // "_" is not a valid character for geospatical ID - however, underscores are 
-    // stripped out in the beginning while running check_plain().
-    $url = variable_get('geo_data_access_point', 'http://geo.data.gov/geoportal/csw');
-    $url .= '?getxml=' . urlencode('{' . $id . '}');
-    $is_geo = true;
-  } else {
+  }
+  else {
     drupal_fast_404();
     return null;
   }
 
   $cid = "dataset_json_{$id}";
-  $result = cache_get($cid, 'cache');
 
-  if (1==1 || !$result) {
+  $result = $use_cache?cache_get($cid, 'cache'):"";
+
+  if (!$result) {
+
     $ch = curl_init($url);
     curl_setopt_array($ch, array(
         CURLOPT_HEADER => false,
@@ -88,9 +98,8 @@ function datagov_get_metadata_page($id, $echo_out = TRUE) {
     $result = curl_exec($ch);
     curl_close($ch);
 
-    // Geo returns XML, so it must be processed first.
-    if ($is_geo) {
-      $result = _process_geo_record($id, $url, $result);
+    if($is_geo) { // ckan
+      $result = _process_ckan_record($id, $result);
     }
 
     // Convert 'null' values to empty string ''.
@@ -230,7 +239,7 @@ function _process_geo_record($id, $url, $result) {
     $data['geographic_coverage'] = trim($xml->getElementsByTagName('EX_GeographicBoundingBox')->item(0)->nodeValue);
     if (!empty($data['geographic_coverage'])) {
       $data['geographic_coverage'] = preg_split("/[\s,]+/", $data['geographic_coverage']);
-      dsm($data['geographic_coverage']);
+      //dsm($data['geographic_coverage']);
       // Change from e.a.s.n to e.a.n.s.
       $data['geographic_coverage'] = trim($data['geographic_coverage'][0]) . ', ' . trim($data['geographic_coverage'][1]) . ', ' . trim($data['geographic_coverage'][3]) . ', ' . trim($data['geographic_coverage'][2]);
     }
@@ -381,6 +390,13 @@ function _process_geo_record($id, $url, $result) {
   }
 
   return json_encode($data);
+}
+
+function _process_ckan_record($id, $result) {
+    $access_point = variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/') . 'dataset/' .  $id;
+    $result = json_decode($result,true);
+    $result['ckan'] = array(array('access_point' => $access_point));
+    return json_encode($result);
 }
 
 /**

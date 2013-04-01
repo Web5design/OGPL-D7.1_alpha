@@ -1,0 +1,6 @@
+name = CKAN Sync
+description = Cron job to sync dataset from CKAN source. 
+package = CKAN
+core = 7.x
+version = 7.x-1.0
+dependencies[] = external_datasets

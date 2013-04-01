@@ -1,60 +1,251 @@
 <?php
 
 /**
+* Implement hook_menu().
+*/
+function arcgis_map_menu() {
+  $items = array();
+
+$items['admin/config/content/arcgis_map'] = array(
+  'title' => 'Arcgis Map Settings',
+  'description' => 'Configuration for the Arcgis Map module.',
+  'page callback' => 'drupal_get_form',
+  'page arguments' => array('arcgis_map_create_form'),
+  'access arguments' => array('access administration pages'),
+  'type' => MENU_NORMAL_ITEM,
+);
+
+
+ return $items;
+}
+
+function arcgis_map_create_form($form, &$form_state){
+
+	$form['mapsperpage'] = array(
+        '#type' => 'select',
+        '#title' => t('Maps per page'),
+        '#options' => array(1=>1, 2=>2, 3=>3, 4=>4, 8=>8, 12=>12, 16=>16, 24=>24),
+        '#default_value' => variable_get('mapsperpage', 4),
+		'#required' => TRUE,
+    );
+	
+	$form['server_info'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Default Server'),
+        '#description' => 'Please enter the server info. Example: http://www.geoplatform.gov',
+        '#default_value' => variable_get('server_info', 'http://www.geoplatform.gov'),
+		'#required' => TRUE,		
+		
+    );
+	
+	$form['refresh_cache'] = array(
+	    '#type' => 'select',
+        '#title' => t('Refresh Cache'),
+        '#description' => 'Please select time interval after which cache will be refereshed.',
+		'#options' => array(5=>'5 mins', 15=>'15 mins', 30=>'30 mins', 1440=>'1 day', 2880=>'2 days', 4320=>'3 days'),
+        '#default_value' => variable_get('refresh_cache', 15),
+
+	);
+	
+	$form['#validate'][] = 'arcgis_map_create_form_validate';
+	
+	return system_settings_form($form);
+}
+
+function arcgis_map_create_form_validate($form, &$form_state){
+		
+	if (!valid_url($form_state['values']['server_info'], TRUE)) {
+        form_set_error('server_info', t('Please provide a valid URL'));
+    }
+
+}
+
+/**
  * Implementation of hook_form_alter().
  */
 function arcgis_map_form_alter(&$form, $form_state, $form_id) {
   if($form_id != 'arcgis_map_node_form') {
     return;
   }
+   
+  drupal_add_js(drupal_get_path('module', 'arcgis_map') . '/js/arcgis_map.js', 'file');
 
   $form['title']['#required'] = FALSE;
-  $form['title']['#description'] = t("Leave it empty to use map title from server.");
-
-  $form['arcgis_map_server']['und'][0]['value']['#default_value'] = variable_get('arcgis_map_server', 'http://www.geoplatform.gov');
-
+  $form['title']['#description'] = t("Leave it empty to use map/group title from server.");
+  
+   $form['retrieve'] = array(
+      '#type' => 'submit',
+      '#value' => 'Retrieve',
+      '#validate' => array('get_group_id'),
+	  '#weight' => 13,
+	  '#tree' => TRUE,
+  );
+  		
+	
+  $form['#groups']['group_arcgis_forgot_gid']->children[2] = 'retrieve';
+  $form['#group_children']['retrieve'] = 'group_arcgis_forgot_gid';
+	
+  if(!isset($form['arcgis_map_server']['und'][0]['value']['#default_value']))
+	$form['arcgis_map_server']['und'][0]['value']['#default_value'] = variable_get('server_info');
+	
+	
+  if(!empty($form_state['values']['field_group_id']['und'][0]['value']) ) 
+	$form['field_group_id']['und'][0]['value']['#default_value'] = $form_state['values']['field_group_id']['und'][0]['value'];	
+	 
+   
   // Use our own validation function.
   $form['#validate'][] = 'arcgis_map_validate';
 
   // Use our own submit function.
   $form['#submit'][]  = 'arcgis_map_submit';
+  
+}
+
+
+function get_group_id($form, &$form_state, $validate = 0) {
+
+    if (empty($form_state['values']['field_group_owner']) || empty($form_state['values']['field_group_title'])) {
+        if (empty($form_state['values']['field_group_owner'])) {
+            form_set_error('group_owner', t('Group owner field is required'));
+        }
+        if (empty($form_state['values']['field_group_title'])) {
+            form_set_error('group_title', t('Group title field is required'));
+        }
+    }
+    else {
+        if (!valid_url($form_state['values']['arcgis_map_server']['und'][0]['value'], FALSE)) {
+            form_set_error('server_info', t('Please provide a valid URL'));
+        }
+        // Set some parameters for sending request.
+        $target_url = $form_state['values']['arcgis_map_server']['und'][0]['value'].'/sharing/community/groups';
+		$form_state['values']['field_group_title']['und'][0]['value'] = urldecode($form_state['values']['field_group_title']['und'][0]['value']);
+        
+		$q = urlencode('owner:'.$form_state['values']['field_group_owner']['und'][0]['value'].' AND title:' . urldecode($form_state['values']['field_group_title']['und'][0]['value']) . '');
+		$q = str_replace("%26", "&", $q);
+        $get_query = 'q='.$q.'&f=json&_='.time();
+        $request_url = $target_url. '?'. $get_query;
+		
+        $result = drupal_http_request($request_url);
+        $res_array = (array)json_decode($result->data);
+		
+        // Setting $form_state['rebuild'] = TRUE causes the default submit
+        // function to be skipped and the form to be rebuilt.
+        $temp = $res_array['results'][0]->id;
+		
+		
+		if ($temp) {
+			$form_state['values']['field_group_id']['und'][0]['value'] = $res_array['results'][0]->id;
+		}
+		else {
+		    if($validate == 0)
+				form_set_error('group_id', t('Could not find the Group ID on this server. Please check the information you have provided is accurate.'));
+			else
+				form_set_error('group_id', t('Group Id does not match with Group Owner and Group Title combination. Please check the information you have provided is accurate.'));
+		}
+    }
+	
+	if($validate == 0) {
+	
+		unset($form_state['input']['field_group_id']);
+	
+		$form_state['rebuild'] = TRUE;
+	}
+	
 }
 
 /**
  * Define our own valdiate function.
  */
 function arcgis_map_validate($form, &$form_state) {
-  // TODO not doing validate uite right yet. not sure why only form_state 2nd time works
 
-  if (empty($form_state['values'])) {
-    return;
-  }
+	  // TODO not doing validate uite right yet. not sure why only form_state 2nd time works
 
-  $server = check_url($form_state['values']['arcgis_map_server']['und'][0]['value']);
-  // TODO this masks out some error input.
-  $map_id = preg_replace('/[^A-Fa-f0-9]+/', '', $form_state['values']['arcgis_map_id']['und'][0]['value']);
+	  if (empty($form_state['values'])) {
+		return;
+	  }
 
-  if (empty($server) || empty($map_id)) {
-    // TODO let default validate catch it.
-    return;
-  }
+	  $server = check_url($form_state['values']['arcgis_map_server']['und'][0]['value']);
+	  // TODO this masks out some error input.
+	  $map_id = preg_replace('/[^A-Fa-f0-9]+/', '', $form_state['values']['arcgis_map_id']['und'][0]['value']);
+	  
+	  $group_id = $form_state['values']['field_group_id']['und'][0]['value'];
+	 
+	  if (empty($server) || (empty($map_id) && empty($group_id)) ) {
+		// TODO let default validate catch it.
+		return;
+	  }
 
-  $request = get_arcgis_map_info($server, $map_id);
-  if (isset($request->error)) {
-    form_set_error('', t("Error fetching map. Please check accuracy of the server address and map ID." . "<br>" . $request->error));
-  }
-  else {
-    // TODO also insert into cache
-    $form_state['values']['map'] = $request->data;
-  }
+	  $request = get_arcgis_map_info($server, $map_id, $group_id, 0);
+
+	  if (isset($request[0]->error)) {
+		form_set_error('', t("Error fetching map. Please check accuracy of the server address and map ID." . "<br>" . $request[0]->error));
+	  }
+	  elseif(!empty($group_id) && json_decode($request[0]->data)->total == 0){
+		form_set_error('', t("Error fetching map. Please check accuracy of the server address and group ID." . "<br>"));
+	  }
+	  else {
+		
+		$form_state['values']['map'] = $request[0]->data;
+	  }
+	  
+	  if(!empty($form_state['values']['field_group_id']['und'][0]['value']) && !empty($form_state['values']['field_group_title']['und'][0]['value']) && !empty($form_state['values']['field_group_owner']['und'][0]['value']))
+		  get_group_id($form, $form_state, 1);
 }
 
-function get_arcgis_map_info($server, $map_id) {
-  // TODO cache
-  $url =  $server. "/sharing/content/items/$map_id/info/iteminfo.xml";
-  $result = drupal_http_request($url);
+
+function get_arcgis_map_info($server, $map_id, $group_id, $display, $node_id = "" ) {
+
+
+  $result = &drupal_static(__FUNCTION__);
+ 
+  if($node_id != "")
+     unset($result);
+ 
+  if (!isset($result)) {
+   
+   if($node_id == "")
+		$node_id = arg(1);
+	
+    $cache = cache_get('map_data_' . $node_id);
+
+	if (isset($cache) && $cache->expire > REQUEST_TIME && isset($display) && $display == 1) {
+
+		$result[0] = $cache->data;
+		$result[1] = cache_get('header_info_' . $node_id)->data;
+    }
+    else {
+		
+	  if(!empty($map_id)){
+		$url =  $server. "/sharing/content/items/$map_id/info/iteminfo.xml";
+
+	  }
+	  elseif(!empty($group_id) && $display == 0) {
+		$url =  $server. "/sharing/community/groups?q=id:".$group_id."&f=json&_=".time();
+	 }
+	  elseif(!empty($group_id) && $display == 1) {
+		$url =  $server."/sharing/search?_=".time()."&q=group:".$group_id."&f=json&sortField=uploaded&sortOrder=desc&num=99&start=1";
+		$url2 =  $server. "/sharing/community/groups?q=id:".$group_id."&f=json&_=".time();
+		
+		$result[1] = drupal_http_request($url2);
+		cache_set('header_info_' . $node_id, $result[1], 'cache', time() + (variable_get('refresh_cache')*60));
+	  }
+		
+	  $result[0] = drupal_http_request($url);
+      cache_set('map_data_' . $node_id, $result[0], 'cache', time() + (variable_get('refresh_cache')*60));
+	  
+    }
+  }
   return $result;
 }
+
+/**
+* Check if string is in json format
+**/
+function isJson($string) {
+ json_decode($string);
+ return (json_last_error() == JSON_ERROR_NONE);
+}
+
 
 /**
  * Define our own submit function.
@@ -62,13 +253,25 @@ function get_arcgis_map_info($server, $map_id) {
 function arcgis_map_submit($form,&$form_state) {
 
   $map = $form_state['values']['map'];
-  $map = new SimpleXMLElement($map);
-
-  // Give it a title.
-  if (trim($form_state['values']['title'] == "")) {
-    $form_state['values']['title'] = strip_tags($map->title->asXML());
-  }
   
+  if(isset($map)) {
+  
+	if(isJson($map)) {
+		$map = (array)json_decode($map);
+		$map = $map['results'][0];
+	}
+	else
+		$map = new SimpleXMLElement($map);
+	
+	// Give it a title.
+	if (trim($form_state['values']['title'] == "")) {
+	    if(isJson($map))
+			$form_state['values']['title'] = strip_tags($map->title);
+		else
+			$form_state['values']['title'] = strip_tags($map->title->asXML());
+	}
+	
+  }
 }
 
 /**
@@ -174,27 +377,99 @@ function arcgis_map_preprocess_node(&$vars) {
 //  dsm($vars['view_mode']);
 
   if ($vars['view_mode'] == 'full') {
-
-    // This is our tpl file
-    $vars['theme_hook_suggestions'][] = 'node__arcgis_map';
+  
+	$module_path = drupal_get_path('module', 'arcgis_map');
+	$full_path = $module_path .'/css/arcgis_map.css';
+	drupal_add_css($full_path);
 
     // Pass in map info to display the full node.
     $server = $vars['node']->arcgis_map_server['und'][0]['value'];
-    $map_id = $vars['node']->arcgis_map_id['und'][0]['value'];
-
-    $request = get_arcgis_map_info($server, $map_id);
-    if (isset($request->error)) {
-      drupal_set_message(t('An error occurred and processing did not complete.)'. '<br>' . $request->error), 'error');
+	
+	if(isset($vars['node']->arcgis_map_id['und']))
+		$map_id = $vars['node']->arcgis_map_id['und'][0]['value'];
+	else
+		$map_id = '';
+	
+	if(isset($vars['node']->field_group_id['und']))
+		$group_id = $vars['node']->field_group_id['und'][0]['value'];
+	else
+		$group_id = '';
+		
+    // This is our tpl file
+    $vars['theme_hook_suggestions'][] = 'node__arcgis_map';
+	
+	$request = get_arcgis_map_info($server, $map_id, $group_id, 1);	
+	
+    if (isset($request[0]->error)) {
+      drupal_set_message(t('An error occurred and processing did not complete.'. '<br>' . $request[0]->error), 'error');
       return;
     }
-
-    // Parse the xml. TODO put into a function.
-    $map = new SimpleXMLElement($request->data);
-
-    // Pass info into theme.
-    $vars['map_info']['title'] = strip_tags($map->title->asXML());
-//  $vars['map_info']['snippet'] = strip_tags($map->snippet->asXML());
-    $vars['map_info']['img_href'] = $server . '/home/item.html?id=' . $map_id;
-    $vars['map_info']['img_src'] = $server . '/sharing/content/items/' . $map_id . '/info/' . strip_tags($map->thumbnail->asXML());
+	
+	
+	if(isJson($request[0]->data)) {
+		
+		$info = (array)json_decode($request[1]->data);
+		
+		$vars['info']['title'] = strip_tags($info['results'][0]->title);
+		$vars['info']['description'] = strip_tags($info['results'][0]->description);
+		$vars['info']['snippet'] = strip_tags($info['results'][0]->snippet);
+		$vars['info']['thumbnail_src'] = $server.'/sharing/community/groups/' . strip_tags($info['results'][0]->id) . '/info/' . strip_tags($info['results'][0]->thumbnail);
+		$vars['info']['type'] = 'Group';
+		
+		$map = (array)json_decode($request[0]->data);
+		$res = sizeof($map['results']);
+		
+		$vars['map_info']['total_maps'] = $res;
+		
+		for($i=0; $i<$res; $i++) {		 
+		
+			$title = $map['results'][$i]->title;
+			if (empty($title)){continue;}
+			
+			$vars['map_info'][$i]['title'] = $title;
+			
+			if($map['results'][$i]->type == "Web Map")
+				$vars['map_info'][$i]['img_href'] = $server.'/home/webmap/viewer.html?webmap='.$map['results'][$i]->id;
+			elseif($map['results'][$i]->type == "Map Service" || $map['results'][$i]->type == "WMS")
+				$vars['map_info'][$i]['img_href'] = $server.'/home/webmap/viewer.html?services='.$map['results'][$i]->id;
+			else
+				$vars['map_info'][$i]['img_href'] = $server.'/home/item.html?id='.$map['results'][$i]->id;
+			
+			$vars['map_info'][$i]['img_src'] = $server.'/sharing/content/items/'.$map['results'][$i]->id.'/info/'.$map['results'][$i]->thumbnail;
+		}
+		
+	}
+	else {
+	
+		// Parse the xml. TODO put into a function.
+		$map = new SimpleXMLElement($request[0]->data);
+		
+		$vars['info']['title'] = strip_tags($map->title->asXML());
+		$vars['info']['description'] = strip_tags($map->description->asXML());
+		$vars['info']['snippet'] = strip_tags($map->snippet->asXML());
+		$vars['info']['thumbnail_src'] = $server . '/sharing/content/items/' . $map_id . '/info/' . strip_tags($map->thumbnail->asXML());
+		$vars['info']['type'] = 'Map';
+		
+		// Pass info into theme.
+		$vars['map_info'][0]['title'] = strip_tags($map->title->asXML());
+		
+		if($map->type == "Web Map")
+			$vars['map_info'][0]['img_href'] = $server . '/home/webmap/viewer.html?webmap=' . $map_id;
+		elseif($map->type == "Map Service" || $map->type == "WMS")
+			$vars['map_info'][0]['img_href'] = $server . '/home/webmap/viewer.html?services=' . $map_id;
+		else
+			$vars['map_info'][0]['img_href'] = $server . '/home/item.html?id=' . $map_id;
+			
+			
+		$vars['map_info'][0]['img_src'] = $server . '/sharing/content/items/' . $map_id . '/info/' . strip_tags($map->thumbnail->asXML());
+	}
   }
+}
+
+
+//flush all cache after node save
+function arcgis_map_node_submit($node){
+
+	cache_clear_all('map_data_' . $node->nid , 'cache'); 
+	cache_clear_all('header_info_'. $node->nid , 'cache'); 
 }

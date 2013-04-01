@@ -1038,3 +1038,14 @@ function views_external_database_views_data() {
    return $data;
 
 }
+
+function views_external_database_views_query_alter(&$view, &$query) {
+   // jira #DG-1182 2nd. Department/Agency Level listing, change subagency_id = 0 to subagency_id IS NULL
+   if ( $view->name != "agency_datasets_list") {
+      return;
+   }
+   if (isset($query->where[0]['conditions'][1]) && $query->where[0]['conditions'][1]['value'][':results_subagency_id'] == '0') {
+      unset($query->where[0]['conditions'][1]);
+      $query->add_where(0, 'results.subagency_id', NULL, 'IS');
+   }
+}

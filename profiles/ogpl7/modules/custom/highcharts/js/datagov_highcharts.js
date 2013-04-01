@@ -203,7 +203,7 @@ Drupal.behaviors.views_highcharts = {
                     };
                     datagov_rewrite.yAxis.gridLineWidth = 0;
                     datagov_rewrite.yAxis.labels = {
-                        enabled: false
+                        enabled: true
                     };
                     break;
             }
@@ -343,35 +343,35 @@ Drupal.behaviors.views_highcharts = {
                     datagov_rewrite.plotOptions.column.dataLabels.enabled = true;
                     datagov_rewrite.plotOptions.column.dataLabels.style = {
                         fontFamily: 'novecentowidebold',
-                        fontSize: '13px'
+                        fontSize: '0px'
                     };
                     datagov_rewrite.plotOptions.column.dataLabels.color = '#54abbe';
-                    datagov_rewrite.plotOptions.column.dataLabels.backgroundColor = '#fff';
+                    //datagov_rewrite.plotOptions.column.dataLabels.backgroundColor = '#fff';
                     datagov_rewrite.plotOptions.column.dataLabels.borderRadius = 10;
                     datagov_rewrite.plotOptions.column.dataLabels.padding = 6;
                     datagov_rewrite.plotOptions.column.dataLabels.y = 30; // TODO: if the column value is too small, show the label above the column instead of below/inside it
                     datagov_rewrite.plotOptions.column.pointPadding = 0;
                     datagov_rewrite.series[0].color = '#54abbe';
 
-                // locate '- Private group -' entry. if found, delete this data item and its label. otherwise, delete the last data item and its label
-                // TODO: modify the Drupal view to prevent private group entries from showing, then deprecate this code block
-                    var indexToRemove = datagov_rewrite.xAxis.categories.length - 1;
-                    var newCategories = [];
-                    for (index in datagov_rewrite.xAxis.categories) {
-                        if (datagov_rewrite.xAxis.categories[index] == '- Private group -') {
-                            indexToRemove = index;
-                        } else if (index != indexToRemove) {
-                            newCategories.push(datagov_rewrite.xAxis.categories[index]);
-                        }
-                    }
-                    var newSeriesData = [];
-                    for (index in datagov_rewrite.series[0].data) {
-                        if (index != indexToRemove) {
-                            newSeriesData.push(datagov_rewrite.series[0].data[index]);
-                        }
-                    }
-                    datagov_rewrite.xAxis.categories = newCategories;
-                    datagov_rewrite.series[0].data = newSeriesData;
+                // // locate '- Private group -' entry. if found, delete this data item and its label. otherwise, delete the last data item and its label
+                // // TODO: modify the Drupal view to prevent private group entries from showing, then deprecate this code block
+                //     var indexToRemove = datagov_rewrite.xAxis.categories.length - 1;
+                //     var newCategories = [];
+                //     for (index in datagov_rewrite.xAxis.categories) {
+                //         if (datagov_rewrite.xAxis.categories[index] == '- Private group -') {
+                //             indexToRemove = index;
+                //         } else if (index != indexToRemove) {
+                //             newCategories.push(datagov_rewrite.xAxis.categories[index]);
+                //         }
+                //     }
+                //     var newSeriesData = [];
+                //     for (index in datagov_rewrite.series[0].data) {
+                //         if (index != indexToRemove) {
+                //             newSeriesData.push(datagov_rewrite.series[0].data[index]);
+                //         }
+                //     }
+                //     datagov_rewrite.xAxis.categories = newCategories;
+                //     datagov_rewrite.series[0].data = newSeriesData;
 
                 // highlight the highest column with a different color
                     var maxValue = 0;

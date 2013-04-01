@@ -260,8 +260,8 @@ function usasearch_fetch_results($query, $group = NULL) {
   $page++;
 
   // TODO put site into a variable
-  $scope = $group?"site:www.data.gov/$group->purl+":"";
-  //$scope = $group?"site:www.data.gov/communities+":"";
+  //$scope = $group?"site:www.data.gov/$group->purl+":"";
+  $scope = $group?"site:www.data.gov/communities+":"";
 
   $query = "query=" . $scope . urlencode($query);
   $query .= "&affiliate=$affiliate_name";

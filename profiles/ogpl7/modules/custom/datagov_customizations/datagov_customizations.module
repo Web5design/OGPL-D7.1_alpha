@@ -4,6 +4,163 @@
  *  Module to add Data.gov specific customizations.
  */
 
+// Workaround (#34) for http://drupal.org/node/1615438
+// known bug related to search term containing multiple words
+function datagov_customizations_views_query_alter(&$view, &$query) {
+  if (isset($query->fields['score'])) {
+    unset($query->fields['score']);
+  }
+}
+
+function datagov_customizations_form_alter(&$form, $form_state, $form_id) {
+
+  // #jira DG-1172: Sort community names in registration page and other places in CMS
+  if (isset($form['edit_group_membership']['group_membership']['#options'])) {
+    asort($form['edit_group_membership']['group_membership']['#options']);
+  }
+  if (isset($form['group_audience']['und']['#options'])) {
+    asort($form['group_audience']['und']['#options']);
+  }
+  if (isset($form['group_audience']['und']['#options']['My communities'])) {
+    asort($form['group_audience']['und']['#options']['My communities']);
+  }
+  if(isset($form['group_audience']['und']['#options']['Other communities'])) {
+    asort($form['group_audience']['und']['#options']['Other communities']);
+  }
+
+
+
+  // #jira DG-1066. Menu parent item is not populated right. We add some js for a quick fix.
+
+  // Only handle node editing form
+  if(!preg_match('/^[a-zA-Z0-9_]+_node_form$/', $form_id)) {
+    return;
+  }
+
+  // Get parent item, which is last but one.
+  $menu = menu_get_active_trail();
+  $count = count($menu);
+  if ( $count < 2) {
+    return;
+  }
+  $parent = $menu[$count - 2];
+  $parent_value = $parent['menu_name'] . ":" . $parent['mlid'];
+
+  if (strpos($parent_value, "main-menu:") !== 0 ) { // make sure it stays within main menu.
+    $parent_value = "main-menu:0";
+  }
+
+  $inline_js = "jQuery(document).ready(function () {jQuery('#edit-menu-parent').val('$parent_value');})"; 
+  drupal_add_js($inline_js, 'inline');
+
+
+
+}
+
+function datagov_customizations_get_published_communities() {
+  static $communities_published;
+
+  if (isset($communities_published)) {
+     return $communities_published;
+   } 
+
+  // Find out all published communities.
+  $gids = og_get_all_group();
+  $communities_published = array();
+  foreach ($gids as $gid) {
+    $group = og_load($gid);
+    $group_node = node_load($group->etid);
+    if ($group_node->status) {
+      $communities_published[] = $group->gid;
+    } 
+  }
+
+  return $communities_published;
+
+}
+
+function datagov_customizations_views_pre_render(&$view) {
+
+  $communities_published = datagov_customizations_get_published_communities();
+
+  switch ($view->name) {
+
+    case "communities_activity_graph":
+      $valid_entries = array();
+      $count = count($view->result);
+      for ($i=0; $i < $count; $i++) {
+        if (in_array($view->result[$i]->field_data_group_audience_group_audience_gid, $communities_published)) {
+          $valid_entries[] = $view->result[$i];
+        }
+        // Only need up to 3 items
+        if (count($valid_entries) == 3) {
+          break;
+        }
+      }
+      $view->result = $valid_entries;
+      break;
+
+    case "community_activity_feed_content":
+    case "community_events":
+    case "community_featured_content":
+      if ($view->name == 'community_events' && $view->current_display != 'ogpl_upcoming_events_page') {
+        break;
+        // TODO need to handle the csv display.
+      }
+      $valid_entries = array();
+      $count = count($view->result);
+      for ($i=0; $i < $count; $i++) {
+        $groups = $view->result[$i]->field_group_audience;
+        // At least one published group?
+        $b_published = FALSE;
+        foreach ($groups as $group) {
+          if (in_array($group['raw']['gid'], $communities_published)) {
+            $b_published = TRUE;
+            break;
+          }
+        }
+        if ($b_published) {
+          // modify $view->result[$i]: filter out the unpublished communities here
+            foreach ($view->result[$i]->field_group_audience as $key => $value) {
+              if (!in_array($value['raw']['gid'], $communities_published)) {
+                unset($view->result[$i]->field_group_audience[$key]);
+              }
+            }
+
+          $valid_entries[] = $view->result[$i];
+        }
+        $limit = 10; // default
+        if (
+            ($view->name == 'community_activity_feed_content' && $view->current_display == 'ogpl_community_event_block')
+            ||
+            ($view->name == 'community_featured_content')
+           ) {
+          $limit = 3;
+        }
+        if ($view->name == 'community_events' && $view->current_display == 'ogpl_upcoming_events_page') {
+          $limit = 0; // no limit for this view
+        }
+        // Only need up to 10 items
+        if (count($valid_entries) == $limit) {
+          break;
+        }
+      }
+      $view->result = $valid_entries;
+      break;
+
+
+    default:
+    //
+  }
+
+  // communities_activity_graph
+  // community_activity_feed_content
+  // community_hub_slideshow
+  // community_featured_content
+  // community_activity_feed_content
+}
+
+
 /**
  * Implementation of hook_views_api().
  */
@@ -39,4 +196,93 @@ function datagov_customizations_og_role_grant($gid, $uid, $rid) {
     if(isset($coreRoleMap[$rid])) {
       user_multiple_role_edit(array($uid), 'add_role', $coreRoleMap[$rid]);
     }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function datagov_customizations_menu() {
+  $items['admin/config/init_datasites'] = array(
+    'title' => 'Initialize Datasite URLs',
+    'description' => 'Copy data from old URL field to new URL field',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('datagov_customizations_init_datasites_form'),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function datagov_customizations_init_datasites_form($form, &$form_state) {
+  $form['buttons']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Copy to new field'),
+  );
+
+  return $form;
+}
+
+function datagov_customizations_init_datasites_form_submit($form, &$form_state) {
+  $terms = array(
+    'international' => array(
+      'first' => current(taxonomy_get_term_by_name('International Country', "open_datasite_url_types"))->tid,
+      'remaining' => current(taxonomy_get_term_by_name('International Regional', "open_datasite_url_types"))->tid,
+    ),
+    'us' => array(
+      'first' => current(taxonomy_get_term_by_name('US State', "open_datasite_url_types"))->tid,
+      'remaining' => current(taxonomy_get_term_by_name('US City or County', "open_datasite_url_types"))->tid,
+    ),
+  );
+
+  // loop through all field_datasite_url_with_type field collection items
+  $entities = entity_load('field_collection_item');
+  $query = new EntityFieldQuery;
+  $result = $query
+    ->entityCondition('entity_type', 'field_collection_item')
+    ->entityCondition('bundle', 'field_datasite_url_with_type')
+    ->execute();
+  foreach ($result['field_collection_item'] as $key => $value) {
+    // delete existing values for field_datasite_url_with_type
+    entity_delete('field_collection_item', $key);
+  }
+
+  // loop through all open_datasite_reference nodes
+  $type = "open_datasite_reference";
+  $nodes = node_load_multiple(array(), array('type' => $type));
+  foreach ($nodes as $node) {
+    $is_intl_idx = (current(taxonomy_get_term_by_name('State Sites', "open_datasites_groupings"))->tid == $node->field_open_datasite_grouping[LANGUAGE_NONE][0]['tid']) ? 'us' : 'international';
+    $node->field_datasite_url_with_type = array();
+    // loop through all field_datasite_url values
+    if (count($node->field_datasite_url[LANGUAGE_NONE]) > 0) {
+      $is_first_idx = 'first';
+      foreach ($node->field_datasite_url[LANGUAGE_NONE] as $value) {
+        // copy to field_datasite_url_with_type values
+        $new_entity_values = array(
+          'field_name' => 'field_datasite_url_with_type',
+          'field_url' => array(
+            LANGUAGE_NONE => array(array(
+              'url' => $value['url'],
+              'title' => $value['title'],
+            )),
+          ),
+          'field_url_type' => array(
+            LANGUAGE_NONE => array(array(
+              'tid' => $terms[$is_intl_idx][$is_first_idx],
+            )),
+          ),
+        );
+
+        $new_entity = entity_create('field_collection_item', $new_entity_values);
+        $new_entity->setHostEntity('node', $node);
+        $new_entity->save();
+
+        $is_first_idx = 'remaining';
+      }
+    }
+
+    $node = node_submit($node);
+    node_save($node);
+  }
+  drupal_set_message(t('Datasite URLs initialized. Go to content and update the URL types.'));
 }

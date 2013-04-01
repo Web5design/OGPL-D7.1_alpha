@@ -13,6 +13,8 @@ function arcgis_map_install() {
     $instance['bundle'] = 'arcgis_map';
     field_create_instance($instance);
   }
+  
+  group_create_instance();
 }
 
 /**
@@ -37,11 +39,15 @@ function arcgis_map_uninstall() {
   // content type (such as the body field) and delete them individually.
   // http://api.drupal.org/api/function/field_delete_field/7
   $instances = field_info_instances('node', 'arcgis_map');
+ 
   foreach ($instances as $instance_name => $instance) {
     field_delete_instance($instance);
   }
 
-
+  if ($group = field_group_load_field_group('group_arcgis_forgot_gid', 'node', 'arcgis_map', 'form')) {
+		ctools_include('export');
+		field_group_group_export_delete($group, FALSE);
+  }
 
   // Delete our content type
   // http://api.drupal.org/api/function/node_type_delete/7
@@ -68,6 +74,19 @@ function _arcgis_map_installed_fields() {
         'max_length' => 256,
       ),
     ),
+	'field_import_method' => array(
+		'field_name'	=> 'field_import_method',
+		'cardinality' => 1,
+		'label'	=> $t('Add Map(s) By'),
+		'required' => TRUE,
+		'type'	=> 'list_text',
+		'settings' => array(
+			'allowed_values' => array(
+				'Map Id' => 'Map Id',
+				'Group Id' => 'Group Id',
+			),
+		),
+	),
     'arcgis_map_id' => array(
       'field_name' => 'arcgis_map_id',
       'cardinality' => 1,
@@ -76,6 +95,31 @@ function _arcgis_map_installed_fields() {
         'max_length' => 60,
       ),
     ),
+	'field_group_id' => array(
+      'field_name' => 'field_group_id',
+      'cardinality' => 1,
+      'type'        => 'text',
+      'settings'    => array(
+        'max_length' => 60,
+      ),
+    ),
+	'field_group_title' => array(
+      'field_name' => 'field_group_title',
+      'cardinality' => 1,
+      'type'        => 'text',
+      'settings'    => array(
+        'max_length' => 60,
+      ),
+    ),
+	'field_group_owner' => array(
+      'field_name' => 'field_group_owner',
+      'cardinality' => 1,
+      'type'        => 'text',
+      'settings'    => array(
+        'max_length' => 60,
+      ),
+    ),
+	
   );
 }
 
@@ -91,18 +135,89 @@ function _arcgis_map_installed_instances() {
       'required' => TRUE,
       'widget'      => array(
         'type'    => 'text_textfield',
-        'weight'  => -2,
+        'weight'  => 1,
       ),
     ),
+	'field_import_method' => array(
+	'field_name'	=> 'field_import_method',
+	'label'	=> $t('Add Map(s) By'),
+	'required' => TRUE,
+	'widget'      => array(
+        'type'    => 'options_select',
+        'weight'  => 2,
+      ),
+	),
     'arcgis_map_id' => array(
       'field_name' => 'arcgis_map_id',
-      'label'       => $t('ArcGIS Map ID'),
-      'required' => TRUE,
+      'label'       => $t('Map ID'),
+      'required' => FALSE,
       'widget'      => array(
         'type'    => 'text_textfield',
-        'weight'  => -1,
+        'weight'  => 3,
       ),
     ),
+	'field_group_id' => array(
+      'field_name' => 'field_group_id',
+      'label'       => $t('Group ID'),
+      'required' => FALSE,
+      'widget'      => array(
+        'type'    => 'text_textfield',
+        'weight'  => 4,
+      ),
+    ),
+	'field_group_title' => array(
+      'field_name' => 'field_group_title',
+      'label'       => $t('Group Title'),
+      'required' => FALSE,
+      'widget'      => array(
+        'type'    => 'text_textfield',
+        'weight'  => 6,
+      ),
+    ),	
+	'field_group_owner' => array(
+      'field_name' => 'field_group_owner',
+      'label'       => $t('Group Owner'),
+      'required' => FALSE,
+      'widget'      => array(
+        'type'    => 'text_textfield',
+        'weight'  => 7,
+      ),
+    ),		
+	
   );
+}
+
+function group_create_instance() {
+
+	$new_group = (object) array(
+		  'identifier' => 'group_arcgis_forgot_gid|node|arcgis_map|form',
+		  'group_name' => 'group_arcgis_forgot_gid',
+		  'entity_type' => 'node',
+		  'bundle' => 'arcgis_map',
+		  'mode' => 'form',
+		  'children' => array(),
+		  'parent_name' => '',
+		  'label' => 'Forgot Group ID',
+		  'format_type' => 'fieldset',
+		  'disabled' => FALSE,
+		  'weight' => 5,
+		  'format_settings' => array(
+			  'formatter' => 'collapsible',
+			  'instance_settings' => array(
+					'classes' => '',
+					'required_fields' => 1,
+			   ),
+		   ),
+		);
+
+    $new_group->children[] = 'field_group_title';
+	$new_group->children[] = 'field_group_owner';
+
+    // Save the field group
+    //field_group_group_save($new_group);
+	
+	ctools_export_crud_save('field_group', $new_group);
+	ctools_export_crud_enable('field_group', $new_group->identifier);
+
 }
 

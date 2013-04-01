@@ -1,0 +1,6 @@
+name = CKAN Metric
+description = Get metric count from CKAN source
+core = 7.x
+package = CKAN
+version = 7.x-1.0
+dependencies[] = external_datasets

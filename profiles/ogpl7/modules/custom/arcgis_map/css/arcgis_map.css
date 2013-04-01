@@ -1,0 +1,54 @@
+/* map gallery */
+.view-map-gallery .views-row {
+    float:left;margin:0 23px;
+}
+.map-gallery-thumbnail {
+    border-radius: 5px 5px 5px 5px;
+    box-shadow: 2px 2px 3px #333333;
+    border:1px solid #ccc;
+	
+	-moz-border-radius:5px;
+    -moz-box-shadow: 2px 2px 3px #333;
+    
+}
+.map-gallery-caption { width:200px;min-height:60px;}
+
+.map-align{
+
+	padding-top: 15px;
+	margin-right:20px;
+    margin-left:10px;
+    display:inline-block;
+    position: relative;
+    float: left;
+}
+
+.map-align:nth-of-type(1){
+	margin-left: 0px;
+}
+
+.map_gallery_wrap span.ext{background-image:none;}
+
+.groupThumbnail {
+    max-height: 65px;
+    max-width: 65px;
+    margin-right:25px;
+    vertical-align: middle;
+
+}
+
+.groupImg{
+margin-top: 20px;
+}
+
+.groupTitle{
+    width: 800px;
+    margin-left: 85px;
+    position: relative;
+    margin-top: 50px;
+}
+
+.groupDesc{
+	position: relative;
+	margin-top: 33px;
+}

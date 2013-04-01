@@ -4,9 +4,6 @@
  * Implementation of hook_form_alter().
  */
 function external_datasets_form_alter(&$form, $form_state, $form_id) {
-  if($form_id != 'data_node_form' && $form_id != 'views_exposed_form') {
-    return;
-  }
 
   // Deal with exposed category filter dropdown
   if ($form_id == 'views_exposed_form') {
@@ -26,6 +23,10 @@ function external_datasets_form_alter(&$form, $form_state, $form_id) {
   }
 
   // Deal with data node editing form.
+  if($form_id != 'data_node_form') {
+    return;
+  }
+
   $form['title']['#required'] = FALSE;
   // Put external elements into an external fieldset.
   $form['external'] = array(
@@ -48,8 +49,26 @@ function external_datasets_form_alter(&$form, $form_state, $form_id) {
     unset($form[$element]);
   }
 
+  // Add a validate function to block CKAN data editing.
+  $form['#validate'][]  = 'external_datesets_node_validate';
+
   // Use our own submit function.
   $form['#submit'][]  = 'data_node_submit';
+}
+
+// Our node editting validation function
+function external_datesets_node_validate($form, &$form_state) {
+  $id = $form_state['values']['field_dataset_id']['und'][0]['value'];
+  if (!preg_match('/^[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/', $id)) {
+    return;
+  }
+  if ($form_state['values']['nid']) {
+    $msg = t("Editing CKAN dataset is not allowed. Edit on CKAN and have it synchronized with daily schedule or manually.");
+  }
+  else {
+    $msg = t("Adding CKAN dataset is not allowed. All CKAN datasets are synchronized with daily schedule or manually.");
+  }
+  form_set_error('',$msg);
 }
 
 // Get a list of valid categories for a given group.
@@ -149,22 +168,41 @@ function data_node_submit($form,&$form_state) {
     return;
   }
 
+  if (strlen($dataset_info->name) !== 0) { // Use name property as ckan indicator
+    $is_ckan = true;
+    $title = $dataset_info->title;
+    $body = $dataset_info->notes;
+    $agency = $dataset_info->extras->{"responsible-party"};
+    $keywords = $dataset_info->extras->tags;
+    if (strpos($keywords, "REQUIRED:") === 0) {
+      $keywords = "";
+    }
+    $keywords = explode(',', $keywords);
+  }
+  else {
+    $is_ckan= false;
+    $title = $dataset_info->title;
+    $body = $dataset_info->description;
+    $agency = $dataset_info->agency;
+    // $keywords is delimitered by comma and new line.
+    $keywords = str_replace("\n", ",", $dataset_info->keywords);
+    $keywords = explode(',', $keywords);
+  }
+
   // title
-  $form_state['values']['title'] = $dataset_info->title;
+  $form_state['values']['title'] = $title;
 
   // body
-  $form_state['values']['body']['und'][0]['value'] = $dataset_info->description;
+  $form_state['values']['body']['und'][0]['value'] = $body;
 
   // field_agency
-  $form_state['values']['field_agency']['und'][0]['value'] = $dataset_info->agency;
+  $form_state['values']['field_agency']['und'][0]['value'] = $agency;
 
   // field_dataset_vocabulary
   $vocabulary = $form_state['field']['field_dataset_vocabulary']['und']['field']['settings']['allowed_values'][0]['vocabulary'];
   $vocabularies = taxonomy_vocabulary_get_names();
   $vid = $vocabularies[$vocabulary]->vid;
 
-  $keywords = $dataset_info->keywords;
-  $keywords = explode(',', $keywords);
   foreach ($keywords as $keyword) {
     $terms = taxonomy_get_term_by_name($keyword, $vocabulary);
     if (!empty($terms)) {
@@ -196,7 +234,6 @@ function get_download_formats_string_by_datasetID($dataset_id){
   $b_echo_out = FALSE;
   $datasetInfo = datagov_get_metadata_page($dataset_id, $b_echo_out);
   $datasetInfo = json_decode($datasetInfo);
-
   $formats = array(
     'xml'=>array(
       'title'=>'XML document',
@@ -252,14 +289,21 @@ function get_download_formats_string_by_datasetID($dataset_id){
       'width'=>'21',
       'height'=>'21'      
       ),
+    'ckan' =>array(
+      'title'=>'Geo-enabled CKAN data',
+      'image_location' =>base_path().drupal_get_path('module','external_datasets').'/images/icon-geo.png',
+      'width'=>'21',
+      'height'=>'21'
+      ),
     );
 
   $output = "";
-  foreach($formats as $format_key=>$format_details){
-    foreach($datasetInfo->$format_key as $download_format_detail){
-    $output.="
+  if (strlen($datasetInfo->name) > 0) {
+    foreach($formats as $format_key=>$format_details){
+      foreach($datasetInfo->$format_key as $download_format_detail){
+      $output.="
       <a href='".$download_format_detail->access_point."'
-       title='".$format_details['title'] . (isset($download_format_detail->file_size)?" (".$download_format_detail->file_size.")":"") . "'>
+       title='". "Geo-enabled CKAN data" . (isset($download_format_detail->file_size)?" (".$download_format_detail->file_size.")":"") . "'>
         <img 
            src='".$format_details['image_location']."' 
            alt='".$format_details['title'] ."' 
@@ -267,11 +311,29 @@ function get_download_formats_string_by_datasetID($dataset_id){
            height='".(isset($format_details['height'])?$format_details['height']:13)."'/>
       </a><br/>
       ";
+      }
     }
   }
-  foreach($datasetInfo->map as $download_format_detail){
-    $output.="<a href = '".$download_format_detail->access_point."'>View Map</a><br/>";
+  else {
+    foreach($formats as $format_key=>$format_details){
+      foreach($datasetInfo->$format_key as $download_format_detail){
+      $output.="
+        <a href='".$download_format_detail->access_point."'
+         title='".$format_details['title'] . (isset($download_format_detail->file_size)?" (".$download_format_detail->file_size.")":"") . "'>
+          <img 
+             src='".$format_details['image_location']."' 
+             alt='".$format_details['title'] ."' 
+             width='".(isset($format_details['width'])?$format_details['width']:41)."' 
+             height='".(isset($format_details['height'])?$format_details['height']:13)."'/>
+        </a><br/>
+        ";
+      }
+    }
+    foreach($datasetInfo->map as $download_format_detail){
+      $output.="<a href = '".$download_format_detail->access_point."'>View Map</a><br/>";
+    }
   }
+
   return $output;
 }
 
@@ -286,5 +348,6 @@ function external_datasets_preprocess_node(&$vars){
   $b_echo_out = FALSE;
   $datasetInfo = datagov_get_metadata_page($dataset_id, $b_echo_out);
   $vars['datasetInfo'] = json_decode($datasetInfo);
+
   $vars['dataset_id'] = $dataset_id;
 }

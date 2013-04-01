@@ -1,0 +1,292 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function external_datasets_crons_menu() {
+  $items = array();
+  $items['admin/config/development/external_datasets_crons'] = array(
+    'title' => 'Configure Cron Job Settings for External Datasets',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('external_datasets_crons_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+  );
+
+  return $items;
+}
+
+/**
+ * The form to provide a link to cron.php.
+ */
+function external_datasets_crons_form($form, &$form_state) {
+
+  $form['title'] = array(
+    '#prefix' => "<div'>",
+    '#suffix' => "</div>",
+    '#markup' => t("Configure the cron job to unpublish raw data if we detect that they are remove form Socrata."),
+  );
+
+
+  $form['status'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Cron status information'),
+  );
+
+  // Need to use Drupal timezone instead of system timezone.
+  // Ignore PHP strict notice if time zone has not yet been set in the php.ini configuration.
+  $timezone_system = @date_default_timezone_get();
+  $timezone_drupal = variable_get('date_default_timezone', $timezone_system);
+  $form['status']['last'] = array(
+    '#markup' => '<div>' . t('New CKAN queue will be created the first time cron runs after %time (%timezone time, %seconds seconds from now).' . '</div>',
+      array(
+        '%time' => format_date(variable_get('external_datasets_crons_next_execution', time()), 'medium', '', $timezone_drupal),
+        '%timezone' => $timezone_drupal,
+        '%seconds' => variable_get('external_datasets_crons_next_execution', time()) - time(),
+      )
+    ),
+  );
+
+  $queue = DrupalQueue::get('external_datasets_crons_queue');
+  $form['status']['current_cron_queue_status'] = array(
+    '#markup' => '<div>' . t('There are currently %queue datasets sitting in current queue to be checked.',
+      array(
+        '%queue' => $queue->numberOfItems(),
+      )) . '</div>',
+  );
+
+
+  $form['cron_run'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Run cron manually'),
+  );
+  $form['cron_run']['cron_reset'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Run external_datasets's cron regardless of whether interval has expired."),
+    '#default_value' => FALSE,
+  );
+  $form['cron_run']['cron_trigger'] = array(
+    '#type' => 'submit',
+    '#value' => t('Run cron now'),
+    '#submit' => array('external_datasets_crons_form_cron_run_submit'),
+  );
+  $form['cron_run']['cron_tip'] = array(
+    '#markup' => t('Tip: To do a manual socrata sync, check the box, and make sure to select AND SAVE a wide time frame below. Otherwise the button will do nothing except executing existing queue items.'),
+    '#prefix' => t('<div>'),
+    '#suffix' => t('</div>'),
+  );
+
+
+  $form['cron_setting'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Daily Cron Job Settings'),
+  );
+  $form['cron_setting']['external_datasets_crons_time_length'] = array(
+    '#type' => 'select',
+    '#title' => t('Cron running length'),
+    '#description' => t('Max runtime per cron run.'),
+    '#default_value' => variable_get('external_datasets_crons_time_length', 20),
+    '#options' => array(
+      5 => t('5 seconds'),
+      20 => t('20 seconds'),
+      60 => t('1 minute'),
+      300 => t('5 minutes'),
+    ),
+  );
+
+  $form['cron_setting']['external_datasets_crons_time_frame_start'] = array(
+    '#type' => 'select',
+    '#title' => t('Daily time frame - start'),
+    '#default_value' => variable_get('external_datasets_crons_time_frame_start', "02:00:00"),
+    '#options' => external_datasets_crons_get_hour_list('start'),
+  );
+
+  $form['cron_setting']['external_datasets_crons_time_frame_end'] = array(
+    '#type' => 'select',
+    '#title' => t('Daily time frame - end'),
+    '#description' => t('Starting and ending time for daily External Datasets cron job. In %timezone time.',
+      array('%timezone' => $timezone_drupal,)
+    ),
+    '#default_value' => variable_get('external_datasets_crons_time_frame_end', "03:59:59"),
+    '#options' => external_datasets_crons_get_hour_list('end'),
+  );
+
+  return system_settings_form($form);
+}
+
+function external_datasets_crons_form_validate($form, &$form_state) {
+  // Check start time and end time
+  $start_time = $form_state['values']['external_datasets_crons_time_frame_start'];
+  $end_time   = $form_state['values']['external_datasets_crons_time_frame_end'];
+  if ($start_time > $end_time) {
+    form_set_error('external_datasets_crons_time_frame_end', t('End time cannot be earlier than start time.'));
+  }
+}
+
+/**
+ * Allow user to directly execute cron, optionally forcing it.
+ */
+function external_datasets_crons_form_cron_run_submit($form, &$form_state) {
+  if (!empty($form_state['values']['cron_reset'])) {
+    variable_set('external_datasets_crons_next_execution', 0);
+  }
+
+  if (drupal_cron_run()) {
+    drupal_set_message(t('Cron ran successfully.'));
+  }
+  else {
+    drupal_set_message(t('Cron run failed.'), 'error');
+  }
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+function external_datasets_crons_cron() {
+
+  // Is it time? we only do it in the early morning time frame.
+  $b_istimeframe = FALSE;
+  // Need to use Drupal timezone instead of system timezone.
+  // Ignore PHP strict notice if time zone has not yet been set in the php.ini configuration.
+  $timezone_system = @date_default_timezone_get();
+  $timezone_drupal = variable_get('date_default_timezone', $timezone_system);
+  date_default_timezone_set($timezone_drupal);
+
+  // Get the hour according to Drupal default timezone.
+  $current_time = time();
+  $today = date('Y-m-d');
+  $time_frame_start = variable_get('external_datasets_crons_time_frame_start', "02:00:00"); // default 2am
+  $time_frame_end   = variable_get('external_datasets_crons_time_frame_end', "03:59:59"); // default 4am
+  if ($current_time >= strtotime($today . " " . $time_frame_start) && $current_time < strtotime($today . " " . $time_frame_end)) {
+    $b_istimeframe = TRUE;
+  }
+
+  // Is queue empty?
+  $b_emptyqueue = FALSE;
+  $queue = DrupalQueue::get('external_datasets_crons_queue');
+  $item_count = $queue->numberOfItems();
+  if (empty($item_count)) {
+    $b_emptyqueue = TRUE;
+  }
+
+  // Is time for new execution yet?
+  $b_timefornewexecution = FALSE;
+  
+  if ($current_time > variable_get('external_datasets_crons_next_execution', 0)) {
+    $b_timefornewexecution = TRUE;
+  }
+
+  if ($b_istimeframe) {
+    if ($b_emptyqueue && $b_timefornewexecution) {
+      // Get all datasets of socrata type.
+      $datasets = external_datasets_crons_get_socrata_datasets();
+      foreach ($datasets as $dataset) {
+        $queue->createItem($dataset);
+      }
+    }
+  }
+  else { // !$b_istimeframe
+    if ($b_emptyqueue) {
+      // set nid = 0
+    }
+    else { // !$b_emptyqueue
+      // save last nid, the delete queue.
+    }
+  }
+
+  // Set next execution time to be tomorrow 2am;
+  $tomorrow = date('Y-m-d', strtotime('+1 day', $current_time));
+
+  variable_set('external_datasets_crons_next_execution', strtotime($tomorrow . " " . $time_frame_start));
+
+  // Set back to system timezone.
+  date_default_timezone_set($timezone_system);
+
+}
+
+// Get all datasets belong to socrata.
+function external_datasets_crons_get_socrata_datasets() {
+  $sql = "
+    SELECT
+      n.nid AS nid,
+      f.field_dataset_id_value AS dataset_id
+    FROM
+      {node} n 
+    JOIN
+      {field_data_field_dataset_id} f 
+    ON
+      n.nid = f.entity_id 
+    WHERE
+      length(f.field_dataset_id_value) < 20
+  ";
+
+  $result = db_query($sql);
+
+  $datasets = array();
+  foreach ($result as $row) {
+    $dataset = array();
+    $dataset['nid'] = $row->nid;
+    $dataset['dataset_id'] = $row->dataset_id;
+    $datasets[] = $dataset;
+  } 
+
+  return $datasets;
+
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function external_datasets_crons_cron_queue_info() {
+  $queues['external_datasets_crons_queue'] = array(
+    'worker callback' => 'external_datasets_crons_queue_worker',
+    'time' => variable_get('external_datasets_crons_time_length', 20), // 20 second max runtime per cron run.
+  );
+
+  return $queues;
+}
+
+function external_datasets_crons_queue_worker($item) {
+  // TODO ?should clear the queue if in wrong timeframe?
+
+  // Check on zend db to see if this one is in there.
+  $sql = "
+    SELECT 1 FROM {datasets} d WHERE d.unique_id = :dataset_id
+  ";
+
+  // Use zend db
+  db_set_active('data_gov');
+  $result = db_query($sql, array(':dataset_id' => $item['dataset_id']))->fetchAssoc();
+  // Go back to the default database,
+  db_set_active();
+
+  if (empty($result)) {
+    // unpublish this dataset
+    $sql = "
+      UPDATE {node} n SET n.status = 0 WHERE nid = :nid
+      ;
+      UPDATE {node_revision} v SET v.status = 0 WHERE vid IN (SELECT vid FROM {node} n WHERE n.nid = :nid)
+      ;
+    ";
+    db_query($sql, array(':nid' => $item['nid']));
+    watchdog('external_datasets', "nid " . $item['nid'] . " is unpublished.");
+  }
+
+}
+
+
+/**
+ * Return a list of valid hours in the format of hh:mm:ss.
+ */
+function external_datasets_crons_get_hour_list($type) {
+  $suffix = $type=="start"?":00:00":":59:59";
+  $ret = array();
+  for ($i=0; $i < 24; $i++) {
+    $hh = str_pad($i, 2, "0", STR_PAD_LEFT);
+    $ret[] = $hh . $suffix;
+  }
+  return drupal_map_assoc($ret);
+}
+
+

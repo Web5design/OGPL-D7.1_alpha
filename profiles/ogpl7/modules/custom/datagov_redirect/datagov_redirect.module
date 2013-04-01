@@ -114,6 +114,9 @@ function datagov_redirect_menu() {
 
 function _datagov_redirect__community($group) {
   // Hopefull old and new group name are the same.
+  if ($group == "opendata" || $group == "semantic") {
+    $group = "developer";
+  }
   drupal_goto("community/$group");
   return;
 }
@@ -130,6 +133,10 @@ function _datagov_redirect__data_tools($group_id, $node_id) {
   }
 
   // Find new group info
+  // combine opendata and semantic to developer
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -156,6 +163,9 @@ function _datagov_redirect__blogs($group_id, $node_id) {
   }
 
   // Find new group info
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -182,6 +192,9 @@ function _datagov_redirect__forums($group_id, $node_id) {
   }
 
   // Find new group info
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -209,6 +222,10 @@ function _datagov_redirect__forums_tag($group_id, $tag_id) {
 
 
   // Find new group info
+  // combine opendata and semantic to developer
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -241,6 +258,10 @@ function _datagov_redirect__tools_apps($group_id, $node_id) {
   }
 
   // Find new group info
+  // combine opendata and semantic to developer
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -267,6 +288,10 @@ function _datagov_redirect__challenges($group_id, $node_id) {
   }
 
   // Find new group info
+  // combine opendata and semantic to developer
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -293,6 +318,10 @@ function _datagov_redirect__policies($group_id, $node_id) {
   }
 
   // Find new group info
+  // combine opendata and semantic to developer
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
@@ -319,6 +348,10 @@ function _datagov_redirect__resources($group_id, $node_id) {
   }
 
   // Find new group info
+  // combine opendata and semantic to developer
+  if ($group_id == 116 || $group_id == 130) {
+    $group_id = 233;
+  }
   $new_group = datagov_redirect_find_new_node($group_id);
 
   if (!$new_group) {
