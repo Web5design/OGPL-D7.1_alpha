@@ -86,29 +86,30 @@ function datagov_get_metadata_page($id, $echo_out = TRUE, $use_cache = TRUE) {
   $result = $use_cache?cache_get($cid, 'cache'):"";
 
   if (!$result) {
-
-    $ch = curl_init($url);
-    curl_setopt_array($ch, array(
-        CURLOPT_HEADER => false,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_BINARYTRANSFER => true,
-        CURLOPT_CONNECTTIMEOUT => 15,
-        CURLOPT_TIMEOUT => 15,
-    ));
-    $result = curl_exec($ch);
-    curl_close($ch);
-
-    if($is_geo) { // ckan
-      $result = _process_ckan_record($id, $result);
-    }
+    $response = drupal_http_request($url);
+    $result = $response->data;
 
     // Convert 'null' values to empty string ''.
-    $array = json_decode($result);
+    $array = json_decode($result, true);
     foreach ($array as $key => $value) {
       if ((!is_array($value)) && ($value == null)) {
-        $array->$key = '';
+        $array[$key] = '';
       }
     }
+
+    if($is_geo) { // ckan
+      // decode esponsible_party raw json values.
+      if (variable_get('ckan_sync_decode_responsible_party', 0) && !empty($array['extras']['responsible-party'])) {
+        $responsible_party_json = json_decode($array['extras']['responsible-party'], True);
+        if (is_array($responsible_party_json) && !empty($responsible_party_json[0]['name'])) {
+          $array['extras']['responsible-party'] = $responsible_party_json[0]['name'];
+        }
+      }
+
+      $access_point = trim(variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/')) . 'dataset/' .  $id;
+      $array['ckan'] = array(array('access_point' => $access_point));
+    }
+
     $result = json_encode($array);
 
     cache_set($cid, $result, 'cache', (time() + (60 * 60 * 24)));
@@ -390,13 +391,6 @@ function _process_geo_record($id, $url, $result) {
   }
 
   return json_encode($data);
-}
-
-function _process_ckan_record($id, $result) {
-    $access_point = variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/') . 'dataset/' .  $id;
-    $result = json_decode($result,true);
-    $result['ckan'] = array(array('access_point' => $access_point));
-    return json_encode($result);
 }
 
 /**

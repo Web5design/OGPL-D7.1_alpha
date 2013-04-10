@@ -10,7 +10,30 @@ function datagov_customizations_views_query_alter(&$view, &$query) {
   if (isset($query->fields['score'])) {
     unset($query->fields['score']);
   }
+
+  // Default display for users having 'community export' view access which are not super admins  DG:1238
+  global $user;
+  if ($user->uid != 1 && $view->name == 'community_export_external') {
+    if (count($view->exposed_input['gid'][0]) == 0) {
+      $group_id = og_get_groups_by_user();
+      $query->where[1]['conditions'][1]['field'] = 'og_membership_node.gid';
+      foreach($group_id as $id){
+        $query->where[1]['conditions'][1]['value'][$id] = $id;
+      }
+    }
+    if ($view->exposed_input['type'][0] == 'community') { //if the type is 'community' then add condition to list the nid for the groups
+      $group_id = og_get_groups_by_user();
+      $query->where[1]['conditions'][1]['field'] = 'node.nid';
+      foreach($group_id as $id){
+        $group = og_load($id);
+        $nid = $group->etid;
+        $query->where[1]['conditions'][1]['value'][$nid] = $nid;
+      }
+    }
+  }
 }
+
+//function get_group_id_by_user()
 
 function datagov_customizations_form_alter(&$form, $form_state, $form_id) {
 
@@ -43,17 +66,11 @@ function datagov_customizations_form_alter(&$form, $form_state, $form_id) {
   if ( $count < 2) {
     return;
   }
-  $parent = $menu[$count - 2];
-  $parent_value = $parent['menu_name'] . ":" . $parent['mlid'];
-
-  if (strpos($parent_value, "main-menu:") !== 0 ) { // make sure it stays within main menu.
-    $parent_value = "main-menu:0";
-  }
+  $menu = end($menu);
+  $parent_value = $menu['menu_name'] . ":" . $menu['plid'];
 
   $inline_js = "jQuery(document).ready(function () {jQuery('#edit-menu-parent').val('$parent_value');})"; 
   drupal_add_js($inline_js, 'inline');
-
-
 
 }
 

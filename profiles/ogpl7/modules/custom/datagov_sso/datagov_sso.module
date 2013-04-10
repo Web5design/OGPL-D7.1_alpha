@@ -172,13 +172,17 @@ function is_simplesamlphp_user_provisioning_possible($name, $mail) {
 }
 
 /**
- * Implements hook_user_view()
+ * Implements hook_user_login()
  */
-function datagov_sso_user_view($account, $view_mode, $langcode) {
+function datagov_sso_user_login(&$edit, $account){
   //replace display name with value from SAML assertion
   $saml_attributes = simplesamlphp_auth_get_attributes();
   $display_name = $saml_attributes['field_display_name'][0];
-  $account->realname = check_plain($display_name);
+  if (!empty($display_name)) {
+    $account->field_display_name['und'][0]['value'] = check_plain($display_name);
+    $account->field_display_name['und'][0]['safe_value'] = check_plain($display_name);
+    user_save($account);
+  }
 }
 
 /**

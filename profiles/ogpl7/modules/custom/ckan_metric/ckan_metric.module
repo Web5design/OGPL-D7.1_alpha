@@ -643,7 +643,9 @@ function ckan_metric_queue_worker($item) {
     $ckan = ckan_metric_get_ckan_info($ckan_id);
     if (empty($ckan)) {
       // CKAN error, logged in watchdog.
-      return;
+      $ckan = array('count' => 0); // set to zero and redo it. 
+      $queue = DrupalQueue::get('ckan_metric_queue');
+      $queue->createItem($item); // Start indicator
     }
   }
 
