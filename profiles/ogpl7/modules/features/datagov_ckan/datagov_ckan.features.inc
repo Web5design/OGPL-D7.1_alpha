@@ -20,20 +20,3 @@ function datagov_ckan_ctools_plugin_api() {
 function datagov_ckan_views_api() {
   return array("api" => "3.0");
 }
-
-/**
- * Implements hook_node_info().
- */
-function datagov_ckan_node_info() {
-  $items = array(
-    'data' => array(
-      'name' => t('Data'),
-      'base' => 'node_content',
-      'description' => t('Data.gov Data or Tools'),
-      'has_title' => '1',
-      'title_label' => t('Dataset Title'),
-      'help' => '',
-    ),
-  );
-  return $items;
-}

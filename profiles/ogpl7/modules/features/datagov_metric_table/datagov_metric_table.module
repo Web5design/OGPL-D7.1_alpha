@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov Metric Table feature.
+ */
+
+include_once 'datagov_metric_table.features.inc';
