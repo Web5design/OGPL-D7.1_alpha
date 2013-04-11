@@ -165,7 +165,15 @@ function ckan_sync_form($form, &$form_state) {
     '#title' => t('Enable/Disable Ckan Sync Cron Job'),
     '#default_value' => variable_get('ckan_sync_enabled', 1),
     '#options' => array(0 => t('Disabled'), 1 => t('Enabled')),
-    '#description' => t("Tip: Don't forget to delete all queues."),
+    '#description' => t("Tip: Don't forget to delete all queues before any change."),
+  );
+
+  $form['cron_setting']['ckan_sync_decode_responsible_party'] = array(
+    '#type' => 'radios',
+    '#title' => t('Decode Raw JSON values for Responsible Party'),
+    '#default_value' => variable_get('ckan_sync_decode_responsible_party', 0),
+    '#options' => array(0 => t('No'), 1 => t('Yes')),
+    '#description' => t("Responsible Party comes in as raw json value. Use this option until it is fixed on CKAN end."),
   );
 
   $form['cron_setting']['ckan_sync_time_length'] = array(
@@ -191,7 +199,7 @@ function ckan_sync_form($form, &$form_state) {
   $form['cron_setting']['ckan_sync_time_frame_end'] = array(
     '#type' => 'select',
     '#title' => t('Daily time frame - end'),
-    '#description' => t('Starting and ending time for daily CKAN sync cron job. In %timezone time.',
+    '#description' => t('Start and end time for daily CKAN sync cron job. In %timezone time.',
       array('%timezone' => $timezone_drupal,)
     ),
     '#default_value' => variable_get('ckan_sync_time_frame_end', "03:59:59"),
@@ -329,9 +337,9 @@ function ckan_sync_cron() {
       watchdog('ckan_sync', "0 community mapped. Check config for Mapping Drupal Communities to CKAN Groups", array(), WATCHDOG_ALERT);
     }
     else {
+      // One more thing: record timestamp as queue batch number.
+      variable_set('ckan_sync_batch', $current_time);
       watchdog('ckan_sync', "Community queue created at [$current_time]. $item_count communities to be sync'ed.");
-      // One more thing: add timestamp as last queue.
-      $queue_community->createItem($current_time);
     }
   }
 
@@ -363,20 +371,17 @@ function ckan_sync_cron_queue_info() {
 }
 
 function ckan_sync_queue_community_worker($item) {
+  $queue_community = DrupalQueue::get('ckan_sync_queue_community');
   $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
-
-  if (is_int($item)) {
-    // This is last item, a timestamp.
-    // Pass it to next queue inline.
-    $time_took = time() - $item;
-    watchdog('ckan_sync', "[$item] community queue completed, took $time_took seconds.");
-    $queue_pagination->createItem($item);
-    return;
-  }
 
   $community = $item;
   // Get pages need to be queued to this community.
   $pages = ckan_sync_get_ckan_pages($community);
+  if ($pages == -1) { // -1 means something wrong. redo this queue.
+    $queue_community->createItem($item);
+    return;
+  }
+
   $limit = variable_get('ckan_sync_items_per_page', 50);
 
   for ($i=0; $i < $pages; $i++) {
@@ -388,19 +393,18 @@ function ckan_sync_queue_community_worker($item) {
     );
     $queue_pagination->createItem($item);
   }
+  
+  if ($queue_community->numberOfItems() == 1) { // last item
+    $batch = variable_get('ckan_sync_batch', time());
+    $time_took = time() - $batch;
+    watchdog('ckan_sync', "[$batch] community queue completed, took $time_took seconds.");
+  }
+
 }
 
 function ckan_sync_queue_pagination_worker($item) {
+  $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
   $queue_dataset = DrupalQueue::get('ckan_sync_queue_dataset');
-
-  if (is_int($item)) {
-    // This is last item, a timestamp.
-    // Pass it to next queue inline.
-    $time_took = time() - $item;
-    watchdog('ckan_sync', "[$item] pagination queue completed, took $time_took seconds.");
-    $queue_dataset->createItem($item);
-    return;
-  }
 
   $url = trim(variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/'));
   $url = $url . "api/action/package_search?q=(groups:" . $item['community'] . ")+AND+dataset_type:dataset&sort=metadata_modified%20asc&rows=" . $item['rows'] . "&start=" . $item['start'];
@@ -408,14 +412,16 @@ function ckan_sync_queue_pagination_worker($item) {
 
   if (isset($response->error) || $response->status_message != 'OK') {
     watchdog('ckan_sync', "Error: url is $url, message is $response->error", array(), WATCHDOG_CRITICAL);
-    return $pages;
+    $queue_pagination->createItem($item);
+    return;
   }
 
   $ret = json_decode($response->data, true);
 
   if (!$ret['success']) {
     watchdog('ckan_sync', "Error: url is $url, message is " . print_r($ret['error'], true), array(), WATCHDOG_CRITICAL);
-    return $pages;
+    $queue_pagination->createItem($item);
+    return;
   }
 
   $datasets = $ret['result']['results'];
@@ -423,19 +429,22 @@ function ckan_sync_queue_pagination_worker($item) {
     $queue_dataset->createItem($dataset);
   }
 
+  if ($queue_pagination->numberOfItems() == 1) {
+    // No more page.
+    $batch = variable_get('ckan_sync_batch', time());
+    $time_took = time() - $batch;
+    watchdog('ckan_sync', "[$batch] pagination queue completed, took $time_took seconds.");
+    $queue_count_dataset = $queue_dataset->numberOfItems();
+    if (empty($queue_count_dataset)) {
+      // No more dataset to be sync. this is rarely be called at this place.
+      $count = ckan_sync_delete_outdated($batch);
+      watchdog('ckan_sync', "[$batch] queue completed, took $time_took seconds. $count datesets to be deleted.");
+    }
+  }
+
 }
 
 function ckan_sync_queue_dataset_worker($item) {
-
-  if (is_int($item)) {
-    // This is last item, a timestamp.
-    // Delete all datasets sync'ed before queue creation timestamp.
-    $count = ckan_sync_delete_outdated($item);
-    $time_took = time() - $item;
-    watchdog('ckan_sync', "[$item] queue completed, took $time_took seconds. $count datesets to be deleted.");
-    return;
-  }
-
   // Load the dataset with this id
   $sql = "
     SELECT n.nid, c.field_ckan_metadata_modified_value AS metadata_modified
@@ -475,6 +484,10 @@ function ckan_sync_queue_dataset_worker($item) {
         WHERE entity_id = :nid
       ";
       db_query($sql, array(':timestamp' => time(), 'nid' => $result['nid']));
+
+      // detect whether this is last item in the queue.
+      ckan_sync_cleanup_if_last();
+      
       return;
     }
   }
@@ -486,108 +499,125 @@ function ckan_sync_queue_dataset_worker($item) {
   $dataset_info = datagov_get_metadata_page($item['id'], $b_echo_out, $b_use_cache);
   $dataset_info = json_decode($dataset_info);
 
-  if (empty($dataset_info) || empty($dataset_info->id)) {
-    // Something wrong. Exit before change any node.
-    return;
-  }
+  if (!empty($dataset_info) && !empty($dataset_info->id)) {
+    $created_or_updated = "";
+    if (empty($result)) {
+      // No matching id. Create a new node.
+      $node = new stdClass();
+      $node->type = 'data';
+      node_object_prepare($node);
+      $created_or_updated = "created";
+    }
+    else {
+      // Node exists, with different metadata_modified. Let us modify it.
+      $node = node_load($result['nid']);
+      $created_or_updated = "updated";
+    }
 
-  $created_or_updated = "";
-  if (empty($result)) {
-    // No matching id. Create a new node.
-    $node = new stdClass();
-    $node->type = 'data';
-    node_object_prepare($node);
-    $created_or_updated = "created";
-  }
-  else {
-    // Node exists, with different metadata_modified. Let us modify it.
-    $node = node_load($result['nid']);
-    $created_or_updated = "updated";
-  }
+    $node->title = substr($dataset_info->title, 0, 255);
+    $node->body['und'][0]['value'] = isset($dataset_info->notes)?$dataset_info->notes:"";
+    $node->status = 1;
+    $node->field_dataset_id['und'][0]['value'] = $item['id'];
+    $responsible_party = isset($dataset_info->extras->{"responsible-party"})?substr($dataset_info->extras->{"responsible-party"}, 0, 255):"";
+    if (strpos($responsible_party, "REQUIRED:") === 0) {
+      $responsible_party = "";
+    }
+    $node->field_agency['und'][0]['value'] = $responsible_party;
 
-  $node->title = substr($dataset_info->title, 0, 255);
-  $node->body['und'][0]['value'] = isset($dataset_info->notes)?$dataset_info->notes:"";
-  $node->status = 1;
-  $node->field_dataset_id['und'][0]['value'] = $item['id'];
-  $node->field_agency['und'][0]['value'] = isset($dataset_info->extras->{"responsible-party"})?substr($dataset_info->extras->{"responsible-party"}, 255):"";
-  $node->field_dataset_sync_time['und'][0]['value'] = time();
+    $node->field_dataset_sync_time['und'][0]['value'] = time();
 
-  $node->group_audience['und'] = array(); //Have to reset it first, otherwise old group is not going to be removed.
-  // Find drupal gid for equivalent ckan group
-  $groups_ckan = isset($dataset_info->groups)?$dataset_info->groups:array();
-  $gids = og_get_all_group();
-  foreach ($groups_ckan as $group_ckan) {
-    foreach ($gids as $gid) {
-      $variable_name = "ckan_sync_gid_" . $gid;
-      $group_name = trim(variable_get($variable_name, ''));
-      if ($group_name == $group_ckan) {
-        $node->group_audience['und'][] = array(
-          'gid' => $gid,
-          'state' => 1,// TODO what for?
-          'created' => time(),// TODO what for?
-        );
-        break;
+    $node->group_audience['und'] = array(); //Have to reset it first, otherwise old group is not going to be removed.
+    // Find drupal gid for equivalent ckan group
+    $groups_ckan = isset($dataset_info->groups)?$dataset_info->groups:array();
+    $gids = og_get_all_group();
+    foreach ($groups_ckan as $group_ckan) {
+      foreach ($gids as $gid) {
+        $variable_name = "ckan_sync_gid_" . $gid;
+        $group_name = trim(variable_get($variable_name, ''));
+        if ($group_name == $group_ckan) {
+          $node->group_audience['und'][] = array(
+            'gid' => $gid,
+            'state' => 1,// TODO what for?
+            'created' => time(),// TODO what for?
+          );
+          break;
+        }
       }
     }
-  }
-  // hash some fields to fill metadata_modified, which has been re-purposed to hold hash value of certain dataset fields
-  // id, metadata_modified, and groups
-  $value_1 = $item['id'];
-  $value_2 = isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"";
-  sort($groups_ckan);
-  $value_3 = serialize($groups_ckan);
-  $node->field_ckan_metadata_modified['und'][0]['value'] = md5($value_1 . $value_2 . $value_3);
+    // hash some fields to fill metadata_modified, which has been re-purposed to hold hash value of certain dataset fields
+    // id, metadata_modified, and groups
+    $value_1 = $item['id'];
+    $value_2 = isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"";
+    sort($groups_ckan);
+    $value_3 = serialize($groups_ckan);
+    $node->field_ckan_metadata_modified['und'][0]['value'] = md5($value_1 . $value_2 . $value_3);
 
-  // Now keywords
-  if (isset($node->field_dataset_vocabulary['und'])) {
-    $node->field_dataset_vocabulary['und'] = array(); // clear existing keywords, if any.
-  }
-  $keywords = isset($dataset_info->extras->tags)?$dataset_info->extras->tags:"";
-  if (strpos($keywords, "REQUIRED:") === 0) {
-    $keywords = "";
-  }
-  $keywords = explode(',', $keywords);
+    // Now keywords
+    if (isset($node->field_dataset_vocabulary['und'])) {
+      $node->field_dataset_vocabulary['und'] = array(); // clear existing keywords, if any.
+    }
+    $keywords = isset($dataset_info->extras->tags)?$dataset_info->extras->tags:"";
+    if (strpos($keywords, "REQUIRED:") === 0) {
+      $keywords = "";
+    }
+    $keywords = explode(',', $keywords);
 
-  // Find vocabulary for field_dataset_vocabulary
-  $field_info = field_info_field('field_dataset_vocabulary');
-  $vocabulary = $field_info['settings']['allowed_values'][0]['vocabulary'];
-  $vocabularies = taxonomy_vocabulary_get_names();
-  $vid = $vocabularies[$vocabulary]->vid;
+    // Find vocabulary for field_dataset_vocabulary
+    $field_info = field_info_field('field_dataset_vocabulary');
+    $vocabulary = $field_info['settings']['allowed_values'][0]['vocabulary'];
+    $vocabularies = taxonomy_vocabulary_get_names();
+    $vid = $vocabularies[$vocabulary]->vid;
 
-  foreach ($keywords as $keyword) {
-    $keyword = trim($keyword);
-    $terms = taxonomy_get_term_by_name($keyword, $vocabulary);
-    if (empty($terms)) {
-      // New phrase. Create a new term.
-      taxonomy_term_save((object) array('name'=>$keyword,'vid'=>$vid));
+    foreach ($keywords as $keyword) {
+      $keyword = trim($keyword);
       $terms = taxonomy_get_term_by_name($keyword, $vocabulary);
-    }
-    if (!empty($terms)) {
-      foreach ($terms as $key => $value) {
-        $node->field_dataset_vocabulary['und'][] = array('tid' => $key);
-        break; // one and only one will do.
+      if (empty($terms)) {
+        // New phrase. Create a new term.
+        taxonomy_term_save((object) array('name'=>$keyword,'vid'=>$vid));
+        $terms = taxonomy_get_term_by_name($keyword, $vocabulary);
+      }
+      if (!empty($terms)) {
+        foreach ($terms as $key => $value) {
+          $node->field_dataset_vocabulary['und'][] = array('tid' => $key);
+          break; // one and only one will do.
+        }
       }
     }
+
+    node_save($node);
+    // Keep node->changed meaningful when updating node.
+    if (!empty($result)) {
+      $ckan_metadata_modified = isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"";
+      $ckan_metadata_modified = $ckan_metadata_modified?strtotime($ckan_metadata_modified):0;
+      $sql = "
+        UPDATE {node} n SET changed = (SELECT GREATEST(n.created,:metadata_modified)) WHERE n.nid = :nid
+      ";
+      db_query($sql, array(':metadata_modified' => $ckan_metadata_modified, 'nid' => $result['nid']));
+    }
+    watchdog('ckan_sync_item', "Node $node->nid $created_or_updated.");
   }
 
-  node_save($node);
-  // Keep node->changed meaningful when updating node.
-  if (!empty($result)) {
-    $ckan_metadata_modified = isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"";
-    $ckan_metadata_modified = $ckan_metadata_modified?strtotime($ckan_metadata_modified):0;
-    $sql = "
-      UPDATE {node} n SET changed = (SELECT GREATEST(n.created,:metadata_modified)) WHERE n.nid = :nid
-    ";
-    db_query($sql, array(':metadata_modified' => $ckan_metadata_modified, 'nid' => $result['nid']));
-watchdog('', isset($dataset_info->metadata_modified)?$dataset_info->metadata_modified:"");
-  }
-  watchdog('ckan_sync_item', "Node $node->nid $created_or_updated.");
-
+  // detect whether this is last item in the queue.
+  ckan_sync_cleanup_if_last();
 }
 
 function ckan_sync_queue_delete_worker($nid) {
   node_delete($nid);
   watchdog('ckan_sync_item', "Node $nid deleted.");
+}
+
+// Detect whether this is last item in the queue.
+function ckan_sync_cleanup_if_last() {
+  $queue_pagination = DrupalQueue::get('ckan_sync_queue_pagination');
+  $queue_dataset = DrupalQueue::get('ckan_sync_queue_dataset');
+  $queue_count_pagination = $queue_pagination->numberOfItems();
+  if ($queue_dataset->numberOfItems() == 1 && empty($queue_count_pagination)) {
+    // All done.
+    $batch = variable_get('ckan_sync_batch', time());
+    $time_took = time() - $batch;
+    $count = ckan_sync_delete_outdated($batch);
+    watchdog('ckan_sync', "[$batch] queue completed, took $time_took seconds. $count datesets to be deleted.");
+  }
 }
 
 /**
@@ -678,14 +708,14 @@ function ckan_sync_get_ckan_pages($community) {
 
   if (isset($response->error) || $response->status_message != 'OK') {
     watchdog('ckan_sync', "Error: url is $url, message is $response->error", array(), WATCHDOG_CRITICAL);
-    return $pages;
+    return -1;
   }
 
   $ret = json_decode($response->data, true);
 
   if (!$ret['success']) {
     watchdog('ckan_sync', "Error: url is $url, message is " . print_r($ret['error'], true), array(), WATCHDOG_CRITICAL);
-    return $pages;
+    return -1;
   }
 
   $total = $ret['result']['count'];

@@ -730,6 +730,23 @@ function views_external_database_views_data() {
          'handler' => 'views_handler_argument_numeric',
       ),
     );
+	
+   $data['v_stats_metrics']['data_point_key_1'] = array(
+      'title' => t('Category'),
+      'field' => array(
+         'handler' => 'views_handler_field',
+         'click sortable' => TRUE,
+      ),
+      'sort' => array(
+         'handler' => 'views_handler_sort',
+      ),
+      'filter' => array(
+         'handler' => 'views_handler_filter_string',
+      ),
+      'argument' => array(
+         'handler' => 'views_handler_argument_string',
+      ),
+    );	
 
 
    $data['v_stats_top_country']['table']['group'] = t('Metrics Stats');
