@@ -21,7 +21,7 @@ function datagov_ckan_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'ckan_metric_next_execution';
-  $strongarm->value = 1365728400;
+  $strongarm->value = 1365890400;
   $export['ckan_metric_next_execution'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -35,14 +35,14 @@ function datagov_ckan_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'ckan_metric_time_frame_end';
-  $strongarm->value = '03:59:59';
+  $strongarm->value = '23:59:59';
   $export['ckan_metric_time_frame_end'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'ckan_metric_time_frame_start';
-  $strongarm->value = '03:00:00';
+  $strongarm->value = '00:00:00';
   $export['ckan_metric_time_frame_start'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -51,6 +51,13 @@ function datagov_ckan_strongarm() {
   $strongarm->name = 'ckan_metric_time_length';
   $strongarm->value = '5';
   $export['ckan_metric_time_length'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'ckan_sync_batch';
+  $strongarm->value = 1365875133;
+  $export['ckan_sync_batch'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -70,7 +77,7 @@ function datagov_ckan_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'ckan_sync_next_execution';
-  $strongarm->value = 1365717600;
+  $strongarm->value = 1365890400;
   $export['ckan_sync_next_execution'] = $strongarm;
 
   $strongarm = new stdClass();

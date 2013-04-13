@@ -58,6 +58,7 @@ features[variable][] = ckan_metric_organization_server_address
 features[variable][] = ckan_metric_time_frame_end
 features[variable][] = ckan_metric_time_frame_start
 features[variable][] = ckan_metric_time_length
+features[variable][] = ckan_sync_batch
 features[variable][] = ckan_sync_enabled
 features[variable][] = ckan_sync_gid_1
 features[variable][] = ckan_sync_next_execution
