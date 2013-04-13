@@ -18,7 +18,7 @@ function datagov_metric_table_ctools_plugin_api() {
  * Implements hook_views_api().
  */
 function datagov_metric_table_views_api() {
-  return array("version" => "3.0");
+  return array("api" => "3.0");
 }
 
 /**
