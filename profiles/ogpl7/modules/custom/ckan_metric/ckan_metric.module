@@ -309,7 +309,7 @@ function ckan_metric_get_metric_count() {
 
   // Use zend db
   db_set_active('data_gov');
-  $result = db_query($sql);
+  //$result = db_query($sql);
   // Go back to the default database,
   db_set_active();
 
@@ -328,13 +328,13 @@ function ckan_metric_sync() {
   $batch_timestamp = time();
 
   //Update zend count first
-  $zend_result = ckan_metric_update_zend();
+  /*$zend_result = ckan_metric_update_zend();
   if (!$zend_result) {
     watchdog('ckan_metric', "Batch $batch_timestamp failed.", array(), WATCHDOG_CRITICAL);
     return;
   }
   ckan_metric_cleanup($batch_timestamp, 'zend');
-  watchdog('ckan_metric', "Batch $batch_timestamp updated $zend_result zend records.");
+  watchdog('ckan_metric', "Batch $batch_timestamp updated $zend_result zend records.");*/
 
   // Update ckan count now
   // Get organization structure first
@@ -481,19 +481,19 @@ function ckan_metric_update_node_ckan(&$node, $item, $parent_nid=0) {
   // Rely on zend db to determin is_cfo or not
   $sql = "select full_name from organizations where is_cfo = 'Y'";
   db_set_active('data_gov');
-  $result = db_query($sql);
+  //$result = db_query($sql);
   // Go back to the default database,
   db_set_active();
-  $cfo = array();
+  /*$cfo = array();
   foreach ($result as $row) {
     $cfo[] = $row->full_name;
-  } 
+  }*/ 
 
   $is_cfo = FALSE;
-  $name_to_test = $is_unit?$item['name']:$item['parent_unit'];
+  /*$name_to_test = $is_unit?$item['name']:$item['parent_unit'];
   if (in_array($name_to_test, $cfo)) {
     $is_cfo = TRUE;
-  }
+  }*/
 
   $node->field_metric_sector['und'][0]['value'] = $is_cfo?'Federal':'Other';
 
