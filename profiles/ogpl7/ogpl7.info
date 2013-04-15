@@ -14,6 +14,7 @@ dependencies[] = contextual
 dependencies[] = dashboard
 dependencies[] = dblog
 dependencies[] = features
+dependencies[] = features_override
 dependencies[] = field_ui
 dependencies[] = file
 dependencies[] = image
