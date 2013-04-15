@@ -21,7 +21,7 @@ function datagov_ckan_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'ckan_metric_next_execution';
-  $strongarm->value = 1365890400;
+  $strongarm->value = 1366063200;
   $export['ckan_metric_next_execution'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -72,13 +72,6 @@ function datagov_ckan_strongarm() {
   $strongarm->name = 'ckan_sync_gid_1';
   $strongarm->value = 'manufacturing7382';
   $export['ckan_sync_gid_1'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'ckan_sync_next_execution';
-  $strongarm->value = 1365890400;
-  $export['ckan_sync_next_execution'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
