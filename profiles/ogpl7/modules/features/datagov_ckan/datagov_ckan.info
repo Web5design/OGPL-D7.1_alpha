@@ -55,7 +55,6 @@ features[field_instance][] = node-data-field_supply_chain_market_sector
 features[field_instance][] = node-data-field_usefulness
 features[field_instance][] = node-data-field_userpoints_category
 features[field_instance][] = node-data-group_audience
-features[uuid_node][] = e06ed4de-5992-48c0-a720-1b563b938109
 features[variable][] = ckan_data_access_point
 features[variable][] = ckan_metric_next_execution
 features[variable][] = ckan_metric_organization_server_address

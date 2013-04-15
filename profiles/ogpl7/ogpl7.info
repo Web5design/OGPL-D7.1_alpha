@@ -44,7 +44,6 @@ dependencies[] = datagov_blog
 dependencies[] = datagov_captcha
 dependencies[] = datagov_community
 dependencies[] = datagov_community_extra
-dependencies[] = datagov_ckan
 dependencies[] = datagov_event
 dependencies[] = datagov_developer_apps_gallery
 dependencies[] = datagov_challenge 
@@ -65,6 +64,7 @@ dependencies[] = date_popup
 dependencies[] = date_views
 dependencies[] = datagov_customizations
 dependencies[] = devel
+dependencies[] = datagov_ckan
 
 files[] = datagov.profile
 
