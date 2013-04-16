@@ -21,7 +21,7 @@ function datagov_ckan_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'ckan_metric_next_execution';
-  $strongarm->value = 1366063200;
+  $strongarm->value = 1366149600;
   $export['ckan_metric_next_execution'] = $strongarm;
 
   $strongarm = new stdClass();
