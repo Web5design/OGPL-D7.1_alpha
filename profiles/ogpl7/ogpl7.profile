@@ -93,7 +93,14 @@ function ogpl7_install_finished(&$install_state) {
   // insert demo community group og_menu
   og_menu_update_menu('menu-demo-community-menu', 1);
 
-  //
+  // insert "Data" menu link in demo community group og menu
+  $item = array(
+    'menu_name' => 'menu-demo-community-menu',
+    'module' => 'menu',
+    'link_path' => 'node/9',
+    'link_title' => 'Data',
+  );
+  menu_link_save($item);
 
   menu_cache_clear_all();
 
