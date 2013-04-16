@@ -75,6 +75,31 @@ function ogpl7_install_finished(&$install_state) {
     'link_title' => 'Demo Community',
   );
   menu_link_save($item);
+
+  // insert "demo community group" og menu
+  og_menu_update_menu('menu-demo-community-menu', 1);
+
+  // insert "Data" menu link in Demo Community og menu
+  $item = array(
+    'plid' => $plid,
+    'mlid' => $mlid,
+    'menu_name' => 'main-menu',
+    'module' => 'menu',
+    'link_path' => $link_path,
+    'link_title' => 'Demo Community',
+  );
+  menu_link_save($item);
+
+  // insert demo community group og_menu
+  og_menu_update_menu('menu-demo-community-menu', 1);
+
+  //
+
+  menu_cache_clear_all();
+
+  // rebuild permissions
+  node_access_rebuild();
+
   menu_cache_clear_all();
 
   // rebuild permissions
