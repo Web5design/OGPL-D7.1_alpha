@@ -24,6 +24,10 @@ if(empty($row->dataset_counts_subagency_name)) {
   $name = '<span class="main"> <a href="/list/agency/' . $row->dataset_counts_agency_id . '/*">' . $row->dataset_counts_agency_name . ' (' . $row->dataset_counts_agency_abbr . ') </a></span>';
 }
 else {
+  // if subagency_id = agency_id, it means Department/Agency Level.
+  if ($row->dataset_counts_subagency_id == $row->dataset_counts_agency_id) {
+    $row->dataset_counts_subagency_id = 0;
+  }
   $name = '<span class="sub"> <a href="/list/agency/' . $row->dataset_counts_agency_id  . '/' . $row->dataset_counts_subagency_id . '">' . $row->dataset_counts_subagency_name . ' (' . $row->dataset_counts_subagency_abbr . ') </a></span>';
 }
 
