@@ -69,11 +69,56 @@ function datagov_metric_table_default_page_manager_pages() {
     $pane = new stdClass();
     $pane->pid = 'new-1';
     $pane->panel = 'middle';
-    $pane->type = 'views_panes';
-    $pane->subtype = 'new_metric_table-metric_table_agency_count_pane';
+    $pane->type = 'custom';
+    $pane->subtype = 'custom';
     $pane->shown = TRUE;
     $pane->access = array();
-    $pane->configuration = array();
+    $pane->configuration = array(
+      'admin_title' => '',
+      'title' => '',
+      'body' => '<p>This report is also available for download in the following formats: <a href="/metric/federal-agency-participation.csv">CSV</a> | <a href="/metric/federal-agency-participation.xls">EXCEL</a></p>
+
+<?php
+
+$sql = "
+SELECT 
+  MAX(field_metric_sync_timestamp_value) 
+FROM
+  {field_data_field_metric_sync_timestamp} f
+JOIN
+  {node} n
+ON
+  f.entity_id = n.nid
+WHERE
+  n.status = 1
+";
+
+$result = db_query($sql)->fetchCol();
+
+if (!empty($result) && !empty($result[0])) {
+ // Convert to the date string.
+ $count_last_update = format_date($result[0], $type = \'custom\', $format = \'m/d/Y g:i A\', $timezone = \'America/New_York\');
+
+ // Echo out.
+ echo "<p><em>Data last updated on $count_last_update.</em></p>";
+}
+
+?>
+
+<?php
+//total agency subagency calculation
+$view=views_get_view(\'new_metric_table\');
+$view->set_display(\'metric_table_agency_count_pane\');
+$view->set_items_per_page(0);
+$view->execute();
+$agency = sizeof($view->result);
+
+?>
+
+<div id="open-data-sites-boxes" class="clear agencies"><div class="open-data-sites-box"><div class="region">Agencies and Subagencies</div><div class="numbers"><?php echo $agency . " "; ?></div></div></div><div class="clear">&nbsp;</div>',
+      'format' => 'php_code',
+      'substitute' => TRUE,
+    );
     $pane->cache = array();
     $pane->style = array(
       'settings' => NULL,
@@ -139,7 +184,7 @@ function datagov_metric_table_default_page_manager_pages() {
     $display->content['new-4'] = $pane;
     $display->panels['middle'][3] = 'new-4';
   $display->hide_title = PANELS_TITLE_FIXED;
-  $display->title_pane = 'new-1';
+  $display->title_pane = '0';
   $handler->conf['display'] = $display;
   $page->default_handlers[$handler->name] = $handler;
   $pages['metrics_page'] = $page;
