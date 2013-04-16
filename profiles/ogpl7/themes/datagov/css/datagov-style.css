@@ -2747,3 +2747,29 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     display: none;
 }
 #search-block-form .container-inline{width:335px;}
+
+#open-data-sites-boxes.agencies {
+    height: auto;
+    margin: 0;
+}
+#open-data-sites-boxes.agencies .open-data-sites-box {
+    height: 30px;
+    width: 500px;
+    margin: 10px 0 0 0;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+#open-data-sites-boxes.agencies .open-data-sites-box .region {
+    float: left;
+    height: 30px;
+    line-height: 30px;
+    font-weight: bold;
+}
+#open-data-sites-boxes.agencies .open-data-sites-box .numbers {
+    float: right;
+    font-size: 25px;
+    height: 30px;
+    line-height: 30px;
+    margin-top: 0;
+    font-weight: bold;
+}
