@@ -25,7 +25,7 @@ function datagov_ckan_content_defaults() {
     'body' => array(
       'und' => array(
         0 => array(
-          'value' => '<?php views_embed_view(\'datasets\'); ?>',
+          'value' => '<?php print views_embed_view(\'datasets\', \'ogpl_dataset_pane\') ?>',
           'summary' => '',
           'format' => 'php_code',
         ),
