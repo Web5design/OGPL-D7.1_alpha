@@ -74,7 +74,7 @@ function datagov_sso_form_alter(&$form, &$form_state, $form_id) {
   switch ($form_id) {
     case 'user_login':
     case 'user_login_block':
-      if (variable_get('hide_drupal_login_form', '') == TRUE) {
+      if (variable_get('hide_drupal_login_form', 0) == TRUE) {
           //@todo: not sure if this really disables drupal login, needs to be tested
           $form['name']['#access'] = FALSE;
           $form['pass']['#access'] = FALSE;
@@ -100,21 +100,26 @@ function datagov_sso_form_alter(&$form, &$form_state, $form_id) {
 
     // hide display_name fields since it is kept on the idm
     case 'user_profile_form': 
-      $form['field_display_name'] = array();
-      $mail = $form['#user']->mail;
-      $uid = $form['#user']->uid;
+      if (variable_get('hide_display_name_text_field', 0) == TRUE) {
+        $form['field_display_name'] = array();
+        $mail = $form['#user']->mail;
+        $uid = $form['#user']->uid;
+      }
 
-      // check if uid is associated with openid
-      $result = db_select('authmap', 'a')
-        ->fields('a', array('module', 'uid'))
-        ->condition('module', 'openid','=')
-        ->condition('uid', $uid, '=')
-        ->execute()
-        ->fetchAssoc();
 
-      // hide roles for openid users
-      if ($result) {
-        $form['account']['roles'] = array();  
+      if (variable_get('hide_roles_openid', 0) != '') {
+        // check if uid is associated with openid
+        $result = db_select('authmap', 'a')
+          ->fields('a', array('module', 'uid'))
+          ->condition('module', 'openid','=')
+          ->condition('uid', $uid, '=')
+          ->execute()
+          ->fetchAssoc();
+
+        // hide roles for openid users
+        if ($result) {
+          $form['account']['roles'] = array();  
+        }
       }
   }
 }
@@ -168,20 +173,23 @@ function is_simplesamlphp_user_provisioning_possible($name, $mail) {
     //drupal_set_message("there was no matching email address or user name");
     return true;
   }
-  
 }
 
 /**
  * Implements hook_user_login()
  */
 function datagov_sso_user_login(&$edit, $account){
-  //replace display name with value from SAML assertion
-  $saml_attributes = simplesamlphp_auth_get_attributes();
-  $display_name = $saml_attributes['field_display_name'][0];
-  if (!empty($display_name)) {
-    $account->field_display_name['und'][0]['value'] = check_plain($display_name);
-    $account->field_display_name['und'][0]['safe_value'] = check_plain($display_name);
-    user_save($account);
+  $display_name_saml = variable_get('display_name_saml');
+  if ($display_name_saml != '') {
+    //replace display name with value from SAML assertion
+    $saml_attributes = simplesamlphp_auth_get_attributes();
+    // field_display_name
+    $display_name = $saml_attributes[$display_name_saml][0];
+    if (!empty($display_name)) {
+      $account->field_display_name['und'][0]['value'] = check_plain($display_name);
+      $account->field_display_name['und'][0]['safe_value'] = check_plain($display_name);
+      user_save($account);
+    }
   }
 }
 
@@ -192,6 +200,16 @@ function datagov_sso_user_login(&$edit, $account){
    global $user;
 
    // disable openID tab in user profile
-   $items['user/%/openid']['access callback'] = FALSE;
-   $items['admin/people/create']['access callback'] = FALSE;
+   if (variable_get('hide_openid_tab', 0) == TRUE) {
+     $items['user/%/openid']['access callback'] = TRUE;
+   } else {
+     $items['user/%/openid']['access callback'] = TRUE;
+   }
+
+   if (variable_get('hide_add_user_link', 0) == TRUE) {
+     $items['admin/people/create']['access callback'] = FALSE;
+   } else {
+     $items['admin/people/create']['access callback'] = TRUE;
+   }
+
  }

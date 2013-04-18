@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Datagov SAML SSO feature.
+ */
+
+include_once 'datagov_saml_sso.features.inc';
