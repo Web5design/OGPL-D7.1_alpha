@@ -23,11 +23,11 @@ function datagov_saml_sso_menu_default_menu_links() {
       'alter' => TRUE,
     ),
     'module' => 'menu',
-    'hidden' => '0',
-    'external' => '0',
-    'has_children' => '0',
-    'expanded' => '0',
-    'weight' => '-48',
+    'hidden' => 0,
+    'external' => 0,
+    'has_children' => 0,
+    'expanded' => 0,
+    'weight' => -49,
   );
   // Exported menu link: user-menu:user/login
   $menu_links['user-menu:user/login'] = array(
@@ -39,11 +39,11 @@ function datagov_saml_sso_menu_default_menu_links() {
       'alter' => TRUE,
     ),
     'module' => 'system',
-    'hidden' => '-1',
-    'external' => '0',
-    'has_children' => '0',
-    'expanded' => '0',
-    'weight' => '0',
+    'hidden' => -1,
+    'external' => 0,
+    'has_children' => 0,
+    'expanded' => 0,
+    'weight' => 0,
     'parent_path' => 'user',
   );
   // Translatables
