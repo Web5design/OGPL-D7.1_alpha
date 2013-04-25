@@ -102,6 +102,15 @@ function ogpl7_install_finished(&$install_state) {
   );
   menu_link_save($item);
 
+  // insert "Open ID" menu link in user menu
+  $item = array(
+    'menu_name' => 'user-menu',
+    'module' => 'menu',
+    'link_path' => 'user/login#openid-login',
+    'link_title' => 'Open ID Login',
+  );
+  menu_link_save($item);
+
   menu_cache_clear_all();
 
   // rebuild permissions

@@ -67,6 +67,7 @@ dependencies[] = date_views
 dependencies[] = datagov_customizations
 dependencies[] = devel
 dependencies[] = datagov_ckan
+dependencies[] = datagov_saml_sso
 
 files[] = datagov.profile
 

@@ -13,9 +13,9 @@ function datagov_forums_taxonomy_default_vocabularies() {
       'name' => 'Forums',
       'machine_name' => 'forums',
       'description' => 'Forum navigation vocabulary',
-      'hierarchy' => '1',
+      'hierarchy' => 1,
       'module' => 'forum',
-      'weight' => '-10',
+      'weight' => -10,
     ),
   );
 }

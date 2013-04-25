@@ -119,7 +119,7 @@ function datagov_saml_sso_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'simplesamlphp_auth_unique_id';
-  $strongarm->value = 'name';
+  $strongarm->value = 'mail';
   $export['simplesamlphp_auth_unique_id'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -135,6 +135,62 @@ function datagov_saml_sso_strongarm() {
   $strongarm->name = 'simplesamlphp_auth_user_register_original';
   $strongarm->value = 2;
   $export['simplesamlphp_auth_user_register_original'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_admin_role';
+  $strongarm->value = '3';
+  $export['user_admin_role'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_cancel_method';
+  $strongarm->value = 'user_cancel_block';
+  $export['user_cancel_method'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_email_verification';
+  $strongarm->value = 0;
+  $export['user_email_verification'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_mail_cancel_confirm_subject';
+  $strongarm->value = 'Account cancellation request for [user:name] at [site:name]';
+  $export['user_mail_cancel_confirm_subject'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_mail_status_activated_notify';
+  $strongarm->value = 1;
+  $export['user_mail_status_activated_notify'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_mail_status_blocked_notify';
+  $strongarm->value = 0;
+  $export['user_mail_status_blocked_notify'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_mail_status_canceled_notify';
+  $strongarm->value = 0;
+  $export['user_mail_status_canceled_notify'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'user_register';
+  $strongarm->value = '1';
+  $export['user_register'] = $strongarm;
 
   return $export;
 }

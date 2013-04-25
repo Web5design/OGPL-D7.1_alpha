@@ -725,7 +725,7 @@ if (!$user->uid)
   $handler->display->display_options['fields']['comment_count']['alter']['text'] = '[comment_count] ';
   $handler->display->display_options['fields']['comment_count']['empty'] = '0';
   $handler->display->display_options['fields']['comment_count']['hide_alter_empty'] = FALSE;
-  /* Field: User: Display Name */
+  /* Field: Broken/missing handler */
   $handler->display->display_options['fields']['field_display_name']['id'] = 'field_display_name';
   $handler->display->display_options['fields']['field_display_name']['table'] = 'field_data_field_display_name';
   $handler->display->display_options['fields']['field_display_name']['field'] = 'field_display_name';
