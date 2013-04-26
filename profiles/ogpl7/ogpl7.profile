@@ -105,11 +105,16 @@ function ogpl7_install_finished(&$install_state) {
   // insert "Open ID" menu link in user menu
   $item = array(
     'menu_name' => 'user-menu',
-    'module' => 'menu',
-    'link_path' => 'user/login#openid-login',
+    'link_path' => 'user/login',
     'link_title' => 'Open ID Login',
   );
   menu_link_save($item);
+
+  // set router path
+  db_update('menu_links')
+    ->fields(array('options' => 'a:3:{s:5:"alter";b:1;s:8:"fragment";s:12:"openid-login";s:10:"attributes";a:1:{s:5:"title";s:0:"";}}'))
+    ->condition('link_title', 'Open ID Login')
+    ->execute();
 
   menu_cache_clear_all();
 
@@ -124,4 +129,3 @@ function ogpl7_install_finished(&$install_state) {
   return $output;
 
 }
-
