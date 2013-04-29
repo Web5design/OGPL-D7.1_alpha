@@ -9,5 +9,4 @@ dependencies[] = features
 dependencies[] = og
 dependencies[] = search
 features[features_api][] = api:1
-features[field][] = user-user-group_audience
 features[user_permission][] = search content
