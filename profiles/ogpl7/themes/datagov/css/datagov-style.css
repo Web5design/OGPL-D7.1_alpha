@@ -2729,11 +2729,12 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     float: right;
     font-weight: bold;
     margin-bottom: 0;
-    width: 200px;
+    width: 330px;
 }
 #block-search-form {
     clear: left;
     float: right;
+    margin-bottom: 0px;
     margin-top: -35px;
     width: 350px;
 }
