@@ -110,12 +110,24 @@ function ogpl7_install_finished(&$install_state) {
   );
   menu_link_save($item);
 
-  // set router path
+  // add #openid-login to user/login link path
   db_update('menu_links')
     ->fields(array('options' => 'a:3:{s:5:"alter";b:1;s:8:"fragment";s:12:"openid-login";s:10:"attributes";a:1:{s:5:"title";s:0:"";}}'))
     ->condition('link_title', 'Open ID Login')
     ->execute();
 
+  // add "saml_login" link "menu_per_role" role
+  $result = db_select('menu_links', 'm')
+    ->fields('m')
+    ->condition('link_title', 'SAML Login','=')
+    ->execute()
+    ->fetchAssoc();
+  $mlid = $result['mlid'];
+
+  db_insert('menu_per_role')
+    ->fields(array('mlid' => $mlid, 'rids' => '1', 'hrids' => ''))
+    ->execute();
+  
   menu_cache_clear_all();
 
   // rebuild permissions
