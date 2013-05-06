@@ -747,6 +747,40 @@ function views_external_database_views_data() {
          'handler' => 'views_handler_argument_string',
       ),
     );	
+	
+   $data['v_stats_metrics']['calculated_year'] = array(
+      'title' => t('Year'),
+      'field' => array(
+         'handler' => 'views_handler_field',
+         'click sortable' => TRUE,
+      ),
+      'sort' => array(
+         'handler' => 'views_handler_sort',
+      ),
+      'filter' => array(
+         'handler' => 'views_handler_filter_numeric',
+      ),
+      'argument' => array(
+         'handler' => 'views_handler_argument_numeric',
+      ),
+    );	
+
+   $data['v_stats_metrics']['calculated_month'] = array(
+      'title' => t('Month'),
+      'field' => array(
+         'handler' => 'views_handler_field',
+         'click sortable' => TRUE,
+      ),
+      'sort' => array(
+         'handler' => 'views_handler_sort',
+      ),
+      'filter' => array(
+         'handler' => 'views_handler_filter_numeric',
+      ),
+      'argument' => array(
+         'handler' => 'views_handler_argument_numeric',
+      ),
+    );		
 
 
    $data['v_stats_top_country']['table']['group'] = t('Metrics Stats');
@@ -1057,6 +1091,24 @@ function views_external_database_views_data() {
 }
 
 function views_external_database_views_query_alter(&$view, &$query) {
+
+    if(($view->name == "monthly_download_trends_from_start" || $view->name == "monthly_visitor_stats_from_start" || $view->name == "page_views_from_start") 
+	    && $view->current_display == "page_1" && $view->exposed_raw_input['calculated_year'] == "last_12") {
+		
+		unset($query->where[1]['conditions'][1]);	
+
+		$today = date("d");		
+		
+		if($today > 10)
+			$month = date("m")-1;
+		else
+			$month = date("m")-2;
+				
+		$query->add_where_expression(2, "v_stats_metrics.data_point_date <= '" . date("Y-m-d", mktime(0,0,0,$month ,date("t", $month),date('Y'))) . "'");
+		$query->add_where_expression(0, "v_stats_metrics.data_point_date >= '" . date('Y-m-d', mktime(0,0,0,$month-11,1,date('Y'))) . "'");		
+				
+	}
+	
    // jira #DG-1182 2nd. Department/Agency Level listing, change subagency_id = 0 to subagency_id IS NULL
    if ( $view->name != "agency_datasets_list") {
       return;
@@ -1065,4 +1117,7 @@ function views_external_database_views_query_alter(&$view, &$query) {
       unset($query->where[0]['conditions'][1]);
       $query->add_where(0, 'results.subagency_id', NULL, 'IS');
    }
+   
+
 }
+

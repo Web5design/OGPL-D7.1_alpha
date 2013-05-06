@@ -59,16 +59,32 @@ function external_datasets_form_alter(&$form, $form_state, $form_id) {
 // Our node editting validation function
 function external_datesets_node_validate($form, &$form_state) {
   $id = $form_state['values']['field_dataset_id']['und'][0]['value'];
-  if (!preg_match('/^[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/', $id)) {
+
+  // no ckan data editing.
+  if (!preg_match('/^\d+$/', $id)) {
+    if ($form_state['values']['nid']) {
+      $msg = t("Not a valid Dataset ID. If you are trying to edit a geospatial dataset, edit on CKAN site and have it synchronized with daily schedule or manually.");
+    }
+    else {
+      $msg = t("Not a valid Dataset ID. If you are trying to add a geospatial dataset, it is not necessary since all geospatial datasets are synchronized from CKAN site with daily schedule or manually.");
+    }
+    form_set_error('',$msg);
     return;
   }
-  if ($form_state['values']['nid']) {
-    $msg = t("Editing CKAN dataset is not allowed. Edit on CKAN and have it synchronized with daily schedule or manually.");
+
+  // no fake data.
+  $b_echo_out = FALSE;
+  $use_cache = FALSE;
+  // Fetch external dataset info using module datagov_get_metadata
+  $dataset_info = datagov_get_metadata_page($id, $b_echo_out, $use_cache);
+  $dataset_info = json_decode($dataset_info);
+
+  if (empty($dataset_info)) {
+    $msg = t("Not able to fetch dataset info. Either Dataset ID is not correct, or external server is not responding.");
+    form_set_error('',$msg);
+    return;
   }
-  else {
-    $msg = t("Adding CKAN dataset is not allowed. All CKAN datasets are synchronized with daily schedule or manually.");
-  }
-  form_set_error('',$msg);
+
 }
 
 // Get a list of valid categories for a given group.
@@ -159,6 +175,7 @@ function data_node_submit($form,&$form_state) {
   $dataset_info = datagov_get_metadata_page($dataset_id, $b_echo_out);
   $dataset_info = json_decode($dataset_info);
 
+  // not supposed to happen since we have validated it.
   if (empty($dataset_info)) {
     // Discard any input.
     $form_state['values']['title'] = '';
@@ -302,7 +319,7 @@ function get_download_formats_string_by_datasetID($dataset_id){
     foreach($formats as $format_key=>$format_details){
       foreach($datasetInfo->$format_key as $download_format_detail){
       $output.="
-      <a href='".$download_format_detail->access_point."'
+      <a href='" . str_replace("&type=rss", "&type=feeds", $download_format_detail->access_point) . "'
        title='". "Geo-enabled CKAN data" . (isset($download_format_detail->file_size)?" (".$download_format_detail->file_size.")":"") . "'>
         <img 
            src='".$format_details['image_location']."' 
@@ -318,7 +335,7 @@ function get_download_formats_string_by_datasetID($dataset_id){
     foreach($formats as $format_key=>$format_details){
       foreach($datasetInfo->$format_key as $download_format_detail){
       $output.="
-        <a href='".$download_format_detail->access_point."'
+      <a href='" . str_replace("&type=rss", "&type=feeds", $download_format_detail->access_point) . "'
          title='".$format_details['title'] . (isset($download_format_detail->file_size)?" (".$download_format_detail->file_size.")":"") . "'>
           <img 
              src='".$format_details['image_location']."' 

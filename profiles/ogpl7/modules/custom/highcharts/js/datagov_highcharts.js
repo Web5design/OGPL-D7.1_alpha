@@ -70,7 +70,14 @@ Drupal.behaviors.views_highcharts = {
                     'metrics_monthly_download':true,
                     'metrics_monthly_page_views':true,
                     'metrics_top_country':true,
-                    'metrics_top_state':true
+                    'metrics_top_state':true,
+					
+					'monthly_download_trends_from_start':true,
+					'daily_visitor_from_start':false,
+					'page_views_from_start':true,
+					'monthly_visitor_stats_from_start':true,
+					'top_10_visiting_countries_from_start':true,
+					'top_10_visiting_states_from_start':true
                 },
                 dataLabels:{
                     'metrics_daily_visitor':false,
@@ -78,7 +85,14 @@ Drupal.behaviors.views_highcharts = {
                     'metrics_monthly_download':true,
                     'metrics_monthly_page_views':true,
                     'metrics_top_country':true,
-                    'metrics_top_state':true
+                    'metrics_top_state':true,
+					
+					'monthly_download_trends_from_start':true,
+					'daily_visitor_from_start':false,
+					'page_views_from_start':true,
+					'monthly_visitor_stats_from_start': true,
+					'top_10_visiting_countries_from_start':true,
+					'top_10_visiting_states_from_start':true
                 },
                 decPlaces:{
                     'metrics_daily_visitor':1,
@@ -89,7 +103,14 @@ Drupal.behaviors.views_highcharts = {
                     'metrics_top_state':1,
                     'metrics_suggested_dataset':1,
                     'metrics_rawtool':2,
-                    'metrics_geodata':2
+                    'metrics_geodata':2,
+					
+					'monthly_download_trends_from_start':1,
+					'daily_visitor_from_start':1,
+					'page_views_from_start':1,
+					'monthly_visitor_stats_from_start':1,
+					'top_10_visiting_countries_from_start':1,
+					'top_10_visiting_states_from_start':1
                 }
             }
 
@@ -144,11 +165,78 @@ Drupal.behaviors.views_highcharts = {
                     ;
                     datagov_rewrite.xAxis.title.text = 'Day of the Month';
                     break;
-
+								
+				case 'daily_visitor_from_start':
+					for (var i = datagov_rewrite.xAxis.categories.length - 1; i >= 0; i--) {
+                        var d = datagov_rewrite.xAxis.categories[i];
+                        // d comes in as yyyy-mm format.
+                        d = d.split('-');
+                        try {
+                            d = parseInt(d[2], 10);
+                            datagov_rewrite.xAxis.categories[i] = d;
+                        }
+                        catch (err) {
+                        }
+                    }
+                    ;
+                    datagov_rewrite.xAxis.title.text = 'Day of the Month';
+                    break;
+				
+				case 'monthly_download_trends_from_start':
+				   for (var i = datagov_rewrite.xAxis.categories.length - 1; i >= 0; i--) {
+                        var d = datagov_rewrite.xAxis.categories[i];
+                        // d comes in as yyyy-mm format.
+                        d = d.split('-');
+                        try {
+                            var y = d[0], m = parseInt(d[1], 10);
+                            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            var m = months[m - 1];
+                            datagov_rewrite.xAxis.categories[i] = m + " " + y;
+                        }
+                        catch (err) {
+                        }
+                    }
+                    ;
+                    break;	
+				
+				case 'monthly_visitor_stats_from_start':
+					for (var i = datagov_rewrite.xAxis.categories.length - 1; i >= 0; i--) {
+                        var d = datagov_rewrite.xAxis.categories[i];
+                        // d comes in as yyyy-mm format.
+                        d = d.split('-');
+                        try {
+                            var y = d[0], m = parseInt(d[1], 10);
+                            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            var m = months[m - 1];
+                            datagov_rewrite.xAxis.categories[i] = m + " " + y;
+                        }
+                        catch (err) {
+                        }
+                    }
+                    ;
+                    break;
+				
                 case 'metrics_monthly_visitor':
                 case 'metrics_monthly_download':
                 case 'metrics_monthly_page_views':
                     for (var i = datagov_rewrite.xAxis.categories.length - 1; i >= 0; i--) {
+                        var d = datagov_rewrite.xAxis.categories[i];
+                        // d comes in as yyyy-mm format.
+                        d = d.split('-');
+                        try {
+                            var y = d[0], m = parseInt(d[1], 10);
+                            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            var m = months[m - 1];
+                            datagov_rewrite.xAxis.categories[i] = m + " " + y;
+                        }
+                        catch (err) {
+                        }
+                    }
+                    ;
+                    break;
+					
+				case 'page_views_from_start':
+					for (var i = datagov_rewrite.xAxis.categories.length - 1; i >= 0; i--) {
                         var d = datagov_rewrite.xAxis.categories[i];
                         // d comes in as yyyy-mm format.
                         d = d.split('-');
@@ -170,12 +258,28 @@ Drupal.behaviors.views_highcharts = {
                         align:'right'
                     }
                     break;
+										
                 case 'metrics_top_country':
                     datagov_rewrite.xAxis.labels = {
                         y: 40
                     }
                     datagov_rewrite['chart']['marginBottom'] = 75;
                     break;
+					
+				case 'top_10_visiting_countries_from_start':
+					datagov_rewrite.xAxis.labels = {
+                        y: 40
+                    }
+                    datagov_rewrite['chart']['marginBottom'] = 75;
+                    break;
+				
+				case 'top_10_visiting_states_from_start':
+					datagov_rewrite.xAxis.labels = {
+                        rotation:-50,
+                        align:'right'
+                    }
+                    break;
+				
                 case 'communities_activity_graph':
                     datagov_rewrite.xAxis.title = {
                         text: 'Community Name',
@@ -226,11 +330,24 @@ Drupal.behaviors.views_highcharts = {
             switch (datagov_rewrite['storage']['view_name']) {
                 case 'metrics_daily_visitor':
                 case 'metrics_top_country':
+				
+				case 'top_10_visiting_countries_from_start':
+				    datagov_rewrite['title'] = {
+                        text:datagov_rewrite['title']['text'] + " (" + datagov_rewrite['storage']['month_name'] + ")"
+                    };
+                    break;
+				
                 case 'metrics_top_state':
                     datagov_rewrite['title'] = {
                         text:datagov_rewrite['title']['text'] + " (" + datagov_rewrite['storage']['month_name'] + ")"
                     };
                     break;
+					
+				case 'top_10_visiting_states_from_start':
+                    datagov_rewrite['title'] = {
+                        text:datagov_rewrite['title']['text'] + " (" + datagov_rewrite['storage']['month_name'] + ")"
+                    };
+                    break;				
             }
 
             // Color box before item list.
@@ -253,7 +370,7 @@ Drupal.behaviors.views_highcharts = {
             }
 
             // Country flags
-            if (datagov_rewrite['storage']['view_name'] == 'metrics_top_country') {
+            if (datagov_rewrite['storage']['view_name'] == 'metrics_top_country' || datagov_rewrite['storage']['view_name'] == 'top_10_visiting_countries_from_start') {
                 var data = datagov_rewrite.series[0].data,
                     imagesMap = {};
                 var drawImages = function () {

@@ -1,0 +1,20 @@
+<?php
+function data_comm_unpublish_ctools_render_alter(&$info, &$page, &$context){
+
+   global $user;
+
+   if(isset($context['contexts']['argument_entity_id:node_1']->data->group_audience['und'])) {
+
+		$gid = $context['contexts']['argument_entity_id:node_1']->data->group_audience['und'][0]['gid'];
+		$group_nid = og_load($gid)->etid;
+		$status = node_load($group_nid)->status;
+		
+   }
+   else {
+       $status = node_load($context['args'][0])->status;
+
+   }
+
+   if($status == 0 && !in_array("Super User", $user->roles) && !in_array("Community Administrator", $user->roles) && isset($context['args'][0]))
+		drupal_goto('page/no-access');   
+ }

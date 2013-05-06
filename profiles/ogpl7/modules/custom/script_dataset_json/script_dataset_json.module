@@ -1,0 +1,223 @@
+<?php
+/**
+ * Implementation of hook_menu().
+ */
+function script_dataset_json_menu() {
+  $items = array();
+  $items['scripts/dms_dataset_json'] = array(
+    'title' => 'DMS dataset JSON',
+    'page callback' => 'script_dataset_json_download',
+    'access callback' => TRUE,
+  );
+  return $items;
+}
+
+function script_dataset_json_download() {
+
+  $filename = 'script_dataset_json.json';
+  $file_path = drupal_realpath("public://$filename");
+
+  $key = $_GET['cron_key'];
+  if ($key == variable_get('cron_key')) {
+    script_dataset_json_generate($file_path);
+    echo 'json file updated at ' . date("Y-m-d H:i:s") . '.';
+    drupal_exit();
+  }
+
+  //else
+  drupal_add_http_header('Pragma', 'public');
+  drupal_add_http_header('Expires', '0');
+  drupal_add_http_header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0');
+  drupal_add_http_header('Content-Type', 'application/json');
+
+  if (file_exists($file_path)) {
+    readfile($file_path);
+  }
+  else {
+    echo "[]";
+  }
+
+  drupal_exit();
+}
+
+function script_dataset_json_generate($file_path) {
+  global $databases;
+  $dbhandle = mysql_connect($databases['default']['default']['host'], $databases['default']['default']['username'], $databases['default']['default']['password']) or die("Unable to connect to db server.\n");
+  $selected = mysql_select_db("epa_data_gov",$dbhandle) or die("Could not select db.\n");
+
+  $sql = "
+    SELECT Dataset.dataset_id, Dataset.fk_org_id, Dataset.fk_cat_id, Dataset.fk_subj_id, Dataset.fk_agency_id, Dataset.unique_resource_identifier, Dataset.title, Dataset.description, Dataset.keywords, Dataset.citation, Dataset.date_released, Dataset.date_updated, Dataset.agency_program_page, Dataset.agency_data_series_page, Dataset.unit_of_analysis, Dataset.temporal_coverage, Dataset.periodicity, Dataset.geographic_coverage, Dataset.granularity, Dataset.technical_documentation, Dataset.additional_metadata, Dataset.collection_mode, Dataset.collection_instrument, Dataset.dictionary_list, Dataset.agency_quality_guideline, Dataset.privacy_and_confidentiality, Dataset.agency_contact_name, Dataset.agency_contact_title, Dataset.agency_contact_email, Dataset.agency_contact_phone, Dataset.submitted_date, Dataset.approved_date, Dataset.released_date, Dataset.fk_user_id, Dataset.sampling, Dataset.estimation, Dataset.weighting, Dataset.disclosure_avoidance, Dataset.questionnaire_design, Dataset.series_breaks, Dataset.non_response_adjustment, Dataset.seasonal_adjustment, Dataset.data_quality, Dataset.methodology, Dataset.url_agency_page, Dataset.url_data_series, Dataset.agency, Dataset.agency_shortname, Dataset.fgdc, Dataset.taxonomy, Dataset.other_list, Dataset.fk_cat_type_id, Dataset.published_date, Dataset.fk_status_id, Dataset.datagov_id, Dataset.fk_subagency_id, Dataset.publishstatus, Dataset.archived, Dataset.marked_for_deletion, Dataset.marked_for_update, Dataset.comments, Dataset.dataset_group_name, Dataset.agency_responsible, Dataset.last_updated_by, Dataset.last_updated_date, Dataset.numberofdatasets, Dataset.is_ogd, Dataset.is_high_value, Dataset.orig_id, Dataset.checkout_by, Dataset.checkout_flag, Dataset.originated_by, Dataset.subagency_approval_by, Dataset.agency_approval_by, Dataset.pmo_approved_by, Dataset.qc_approved_by, Dataset.new_reason, Dataset.high_value_reason, Dataset.created_date, Dataset.nsc_approved_by, Dataset.is_agencyogd, Dataset.license, Dataset.license_url, Dataset.nscflag_by, Dataset.nsc_flag, Dataset.draft_completion_date, Dataset.subagency_review_completion_date, Dataset.agency_review_completion_date, Dataset.pmo_review_completion_date, Dataset.nsc_review_completion_date, Dataset.qc_review_completion_date, Agency.agency_id, Agency.agency_text, Agency.agency_name as main_agency_name, Agency.agency_short_text, Agency.agency_abbreviation as main_agency_abbr, Agency.agency_password, Agency.relationship, Agency.is_cfo, Subagency.agency_id, Subagency.agency_text, Subagency.agency_name AS sub_agency_name, Subagency.agency_short_text, Subagency.agency_abbreviation, Subagency.agency_password, Subagency.relationship, Subagency.is_cfo, OriginatedUser.name, SubAgencyUser.name, AgencyUser.name, PMOUser.name, NSCUser.name, QCUser.name, CheckoutUser.name, CreatedUser.name, CreatedUser.fk_role_id,
+
+    dg_subject_areas.subj_area_desc,
+    dg_data_category_types.cat_type_desc,
+    dg_categories.cat_desc
+    FROM dg_datasets AS Dataset 
+    LEFT JOIN dg_subject_areas ON (Dataset.fk_subj_id = dg_subject_areas.subj_id)
+    LEFT JOIN dg_data_category_types ON Dataset.fk_cat_type_id = dg_data_category_types.cat_type_id
+    LEFT JOIN dg_categories ON Dataset.fk_cat_id = dg_categories.cat_id
+
+    LEFT JOIN dg_agencies AS Agency ON (Dataset.fk_agency_id = Agency.agency_id) 
+    LEFT JOIN dg_agencies AS Subagency ON (Dataset.fk_subagency_id = Subagency.agency_id) 
+    LEFT JOIN dg_user_registry_entries AS OriginatedUser ON (Dataset.originated_by = OriginatedUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS SubAgencyUser ON (Dataset.subagency_approval_by = SubAgencyUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS AgencyUser ON (Dataset.agency_approval_by = AgencyUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS PMOUser ON (Dataset.pmo_approved_by = PMOUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS NSCUser ON (Dataset.nsc_approved_by = NSCUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS QCUser ON (Dataset.qc_approved_by = QCUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS CheckoutUser ON (Dataset.checkout_by = CheckoutUser.user_id) 
+    LEFT JOIN dg_user_registry_entries AS CreatedUser ON (Dataset.fk_user_id = CreatedUser.user_id)  
+    WHERE Dataset.fk_status_id=6
+  ";
+  $datasets = mysql_query($sql);
+
+  $results = array();
+  while ($dataset = mysql_fetch_array($datasets, MYSQL_ASSOC)) {
+
+    $dataset = script_dataset_json_null_to_empty($dataset);
+
+    $result = array();
+
+    //// arrange fields per http://project-open-data.github.com/common-core-metadata-schema/
+    ////"Common Core" Required Fields
+    $result['identifier'] = $dataset['main_agency_abbr'] . '-' . $dataset['dataset_id'];
+    $result['title'] = $dataset['title'];
+    $result['description'] = $dataset['description'];
+
+    // accessURL and format
+    $sql_access_points = "SELECT access_point, file_format, file_size FROM dg_data_format_details WHERE fk_dataset_id={$dataset['dataset_id']}";
+    $access_points = mysql_query($sql_access_points);
+
+    $results_access_points = array();
+    $results_format = array();
+    $results_size = array();
+    while ($access_point = mysql_fetch_array($access_points, MYSQL_ASSOC)) {
+      $results_access_points[] = $access_point['access_point'];
+      $results_format[] = $access_point['file_format'];
+      $results_size[] = $access_point['file_size'];
+    }
+    if (count($results_access_points) > 1) {
+      $result['accessURL'] = $results_access_points;
+      $result['format'] = $results_format;
+    }
+    elseif (count($results_access_points) == 1) {
+      $result['accessURL'] = $results_access_points[0];
+      $result['format'] = $results_format[0];
+    }
+    else {
+      $result['accessURL'] = "";
+      $result['format'] = "";
+    }
+
+    $result['keywords'] = $dataset['keywords'];
+    $result['modified'] = $dataset['date_updated'];
+    $result['publisher'] = $dataset['main_agency_name'];
+    $result['person'] = $dataset['agency_contact_name'];
+    $result['mbox'] = $dataset['agency_contact_email'];
+    $result['accessLevel'] = "public";
+
+
+    $result['dataDictionary'] = $dataset['technical_documentation'];
+    //$result['webService'] = $dataset['unique_resource_identifier'];
+    //$result['webService'] = "http://www.data.gov/details/" . $dataset['datagov_id'];
+    $result['webService'] = "";
+    $result['license'] = $dataset['license_url'];
+    $result['spatial'] = $dataset['geographic_coverage'];
+    $result['temporal'] = $dataset['temporal_coverage'];
+
+    ////Expanded Fields
+    $result['issued'] = $dataset['date_released'];
+    $result['accrualPeriodicity'] = $dataset['periodicity'];
+    $result['language'] = "";
+    $result['granularity'] = $dataset['granularity'];
+    $result['dataQuality'] = $dataset['data_quality'];
+    $result['theme'] = $dataset['subj_area_desc'];
+    $result['references'] = $dataset['technical_documentation'];
+
+    $results_distribution = array();
+
+    for ($i = 0; $i < count($results_access_points); $i++) { 
+      $results_distribution[] = array(
+        "accessURL" => $results_access_points[$i],
+        "format" => $results_format[$i],
+        "size" => $results_size[$i],
+      );
+    }
+
+    if (count($results_distribution) > 0) {
+      $result['distribution'] = $results_distribution;
+    }
+    else {
+      $result['distribution'] = "";
+    }
+    
+    if (count($results_access_points) > 1) {
+      $result['size'] = $results_size;
+    }
+    elseif (count($results_access_points) == 1) {
+      $result['size'] = $results_size[0];
+    }
+    else {
+      $result['size'] = "";
+    }
+
+    $result['landingPage'] = "";
+    $result['feed'] = "";
+    $result['systemOfRecords'] = "";
+
+    // additional fields.
+    $result['category'] = $dataset['cat_type_desc'];
+    $result['categoryDesignation'] = $dataset['cat_desc'];
+    $result['bibliographicCitation'] = $dataset['citation'];
+    $result['comments'] = $dataset['comments'];
+    $result['subagency'] = $dataset['sub_agency_name'];
+    $result['agencyProgramURL'] = $dataset['url_agency_page'];
+    $result['agencyDataSeriesURL'] = $dataset['url_data_series'];
+    $result['phone'] = $dataset['agency_contact_phone'];
+    $result['analysisUnit'] = $dataset['unit_of_analysis'];
+    $result['additionalMetadata'] = $dataset['additional_metadata'];
+    $result['collectionMode'] = $dataset['collection_mode'];
+    $result['collectionInstrument'] = $dataset['collection_instrument'];
+    $result['dictionaryList'] = $dataset['dictionary_list'];
+    $result['QualityResponsibleAgency'] = $dataset['agency_responsible'];
+    $result['guidelineCompliance'] = $dataset['agency_quality_guideline'];
+    $result['confidentiality'] = $dataset['privacy_and_confidentiality'];
+    $result['numberOfDatasets'] = $dataset['numberofdatasets'];
+    $result['licenseRequirement'] = $dataset['license'];
+    $result['statisticalMethodology'] = $dataset['methodology'];
+    $result['sampling'] = $dataset['sampling'];
+    $result['estimation'] = $dataset['estimation'];
+    $result['weighting'] = $dataset['weighting'];
+    $result['disclosureAvoidance'] = $dataset['disclosure_avoidance'];
+    $result['questionnaireDesign'] = $dataset['questionnaire_design'];
+    $result['seriesBreaks'] = $dataset['series_breaks'];
+    $result['nonResponseAdjustment'] = $dataset['non_response_adjustment'];
+    $result['seasonalAdjustment'] = $dataset['seasonal_adjustment'];
+    $result['isOGD'] = $dataset['is_ogd'];
+    $result['isAgencyOGD'] = $dataset['is_agencyogd'];
+    $result['isHighValue'] = $dataset['is_high_value'];
+    $result['reasonBeingHighValue'] = $dataset['high_value_reason'];
+    $result['reasonBeingNew'] = $dataset['new_reason'];
+
+    $results[] = $result;
+  }
+
+
+  $content = json_encode($results);
+  $fp = fopen ($file_path, "w"); 
+  fwrite ($fp,$content); 
+
+  fclose ($fp);
+
+  mysql_close($dbhandle);
+}
+
+
+// convert null to empty string for better json.
+function script_dataset_json_null_to_empty($arr) {
+  foreach ($arr as $key => $value) {
+    $arr[$key] = $value === NULL?"":$value;
+  }
+  return $arr;
+}
+
+

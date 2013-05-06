@@ -99,10 +99,18 @@ function datagov_get_metadata_page($id, $echo_out = TRUE, $use_cache = TRUE) {
 
     if($is_geo) { // ckan
       // decode esponsible_party raw json values.
-      if (variable_get('ckan_sync_decode_responsible_party', 0) && !empty($array['extras']['responsible-party'])) {
-        $responsible_party_json = json_decode($array['extras']['responsible-party'], True);
-        if (is_array($responsible_party_json) && !empty($responsible_party_json[0]['name'])) {
-          $array['extras']['responsible-party'] = $responsible_party_json[0]['name'];
+      if (module_exists('ckan_sync') && variable_get('ckan_sync_decode_responsible_party', 1)) {
+        if (!empty($array['extras']['responsible-party'])) {
+          $responsible_party_json = json_decode($array['extras']['responsible-party'], True);
+          if (is_array($responsible_party_json) && !empty($responsible_party_json[0]['name'])) {
+            $array['extras']['responsible-party'] = $responsible_party_json[0]['name'];
+          }
+        }
+        if (!empty($array['extras']['dataset-reference-date'])) {
+          $reference_date_json = json_decode($array['extras']['dataset-reference-date'], True);
+          if (is_array($reference_date_json) && !empty($reference_date_json[0]['value'])) {
+            $array['extras']['dataset-reference-date'] = $reference_date_json[0]['value'];
+          }
         }
       }
 

@@ -105,7 +105,104 @@ function views_external_database_views_post_execute(&$views) {
       // Store the Month Year name.
       $month_name = date('F Y', strtotime($views->result[0]->v_stats_top_state_data_point_date));
       $views->storage['month_name'] = $month_name;
-      break;     
+      break;  
+
+    case 'top_10_visiting_countries_from_start':
+	  // Store the Month Year name.
+      $month_name = date('F Y', strtotime($views->result[0]->v_stats_metrics_calculated_year_month));
+      $views->storage['month_name'] = $month_name;
+      break;  
+	 
+	case 'top_10_visiting_states_from_start':
+	 // Store the Month Year name.
+      $month_name = date('F Y', strtotime($views->result[0]->v_stats_metrics_calculated_year_month));
+      $views->storage['month_name'] = $month_name;
+      break; 
   }
 
 }
+
+function views_external_database_form_alter(&$form, &$form_state, $form_id){
+
+	if($form['#id'] == "views-exposed-form-daily-visitor-from-start-page-1" || $form['#id'] == "views-exposed-form-metrics-download-by-category-from-start-page-1"  
+		|| $form['#id'] == "views-exposed-form-top-10-visiting-countries-from-start-page-1" || $form['#id'] == "views-exposed-form-top-10-visiting-states-from-start-page-1") {
+	
+		unset($form['calculated_month']);
+		$form['calculated_month']['#type'] = 'select';
+		$form['calculated_month']['#options'] = drupal_map_assoc(range(1, 12), 'form_map_month');
+		
+		unset($form['calculated_year']);
+		$form['calculated_year']['#type'] = 'select';
+		
+		if($form['#id'] == "views-exposed-form-top-10-visiting-countries-from-start-page-1" || $form['#id'] == "views-exposed-form-top-10-visiting-states-from-start-page-1") {
+			$form['calculated_year']['#options'] = array( 2010 => t('2010'), 
+													      2011 => t('2011'),													   
+													      2012 => t('2012'));
+		}
+		else {
+			$form['calculated_year']['#options'] = array( 2009 => t('2009'), 
+														  2010 => t('2010'), 
+													      2011 => t('2011'),													   
+													      2012 => t('2012'));
+		}
+		
+		if(in_array(date("Y"), $form['calculated_year']['#options']) != 1)
+		   $form['calculated_year']['#options'][date("Y")] = date("Y");
+		   
+	    $today = date("d");
+		
+		if(strlen($form_state['input']['calculated_year']) == 0) 			
+			$form_state['input']['calculated_year'] = date("Y");		
+	
+		if(strlen($form_state['input']['calculated_month']) == 0){
+			if($today > 10)
+				$form_state['input']['calculated_month'] = date("m")-1;
+			else
+				$form_state['input']['calculated_month'] = date("m")-2;
+		}
+	
+	}
+	
+	if($form['#id'] == "views-exposed-form-monthly-download-trends-from-start-page-1" || $form['#id'] == "views-exposed-form-monthly-visitor-stats-from-start-page-1") {
+	
+		unset($form['calculated_year']);
+		$form['calculated_year']['#type'] = 'select';
+		$form['calculated_year']['#options'] = array( 'last_12' => t('Last 12 Months'),
+													  2009 => t('2009'), 
+													  2010 => t('2010'), 
+													  2011 => t('2011'),													   
+													  2012 => t('2012')
+													  );
+		
+		
+		if(in_array(date("Y"), $form['calculated_year']['#options']) != 1)
+		   $form['calculated_year']['#options'][date("Y")] = date("Y");
+		
+		if(strlen($form_state['input']['calculated_year']) == 0) 			
+			$form_state['input']['calculated_year'] = 'last_12';
+			
+	}
+	
+	if($form['#id'] == "views-exposed-form-page-views-from-start-page-1") {
+	
+		unset($form['calculated_year']);
+		$form['calculated_year']['#type'] = 'select';
+		$form['calculated_year']['#options'] = array( 'last_12' => t('Last 12 Months'),
+													  2011 => t('2011'),													   
+													  2012 => t('2012'));
+			
+		if(in_array(date("Y"), $form['calculated_year']['#options']) != 1)
+		   $form['calculated_year']['#options'][date("Y")] = date("Y");
+		
+		if(strlen($form_state['input']['calculated_year']) == 0) 			
+			$form_state['input']['calculated_year'] = 'last_12';
+	
+	}
+		
+}
+
+function form_map_month($month) {
+	return format_date(gmmktime(0, 0, 0, $month, 2, 1970), 'custom', 'M', 0);
+}
+
+
