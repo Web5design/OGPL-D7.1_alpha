@@ -91,6 +91,17 @@ function clamav_form_alter(&$form, $form_state, $form_id) {
       }
     }
   }
+
+  // Add support for stock Webform file component
+  $protect_webform = variable_get('clamav_enable_webform_file', FALSE);
+  if ($protect_webform && !empty($form['#node']) && 'webform' == $form['#node']->type) {
+    foreach (element_children($form['submitted']) as $field_name) {
+      $field = &$form['submitted'][$field_name];
+      if (isset($field['#type']) && 'managed_file' == $field['#type']) {
+        $field['#upload_validators']['clamav_file_widget_validate'] = array();
+      }
+    }
+  }
 }
 
 /**

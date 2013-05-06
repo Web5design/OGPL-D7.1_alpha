@@ -159,7 +159,11 @@ function clamav_admin_settings($form, &$form_state) {
     '#default_value' => module_exists('image') && variable_get('clamav_enable_element_image_widget', TRUE),
     '#disabled' => !module_exists('image'),
   );
-
+  $form['integration']['clamav_enable_webform_file'] = array(
+    '#type'          => 'checkbox',
+    '#title'         => t('Scan Webform file uploads'),
+    '#default_value' => variable_get('clamav_enable_webform_file', TRUE),
+  );
 
   return system_settings_form($form);
 }

@@ -84,9 +84,9 @@ function addthis_displays_addthis_display_markup__addthis_basic_toolbox($options
  */
 function addthis_displays_addthis_display_markup__addthis_basic_button($options = array()) {
 
-  $button_img = 'http://s7.addthis.com/static/btn/sm-share-en.gif';
+  $button_img = '//s7.addthis.com/static/btn/sm-share-en.gif';
   if ($options['#display']['settings']['button_size'] == 'big') {
-    $button_img = 'http://s7.addthis.com/static/btn/v2/lg-share-en.gif';
+    $button_img = '//s7.addthis.com/static/btn/v2/lg-share-en.gif';
   }
 
   $element = array(

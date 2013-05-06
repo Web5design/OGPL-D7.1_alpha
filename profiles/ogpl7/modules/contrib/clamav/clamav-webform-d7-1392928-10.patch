@@ -1,0 +1,39 @@
+diff --git a/clamav.admin.inc b/clamav.admin.inc
+index 16a7eab..4f2965f 100644
+--- a/clamav.admin.inc
++++ b/clamav.admin.inc
+@@ -159,7 +159,11 @@ function clamav_admin_settings($form, &$form_state) {
+     '#default_value' => module_exists('image') && variable_get('clamav_enable_element_image_widget', TRUE),
+     '#disabled' => !module_exists('image'),
+   );
+-
++  $form['integration']['clamav_enable_webform_file'] = array(
++    '#type'          => 'checkbox',
++    '#title'         => t('Scan Webform file uploads'),
++    '#default_value' => variable_get('clamav_enable_webform_file', TRUE),
++  );
+ 
+   return system_settings_form($form);
+ }
+diff --git a/clamav.module b/clamav.module
+index 1bedce9..3a2c127 100644
+--- a/clamav.module
++++ b/clamav.module
+@@ -91,6 +91,17 @@ function clamav_form_alter(&$form, $form_state, $form_id) {
+       }
+     }
+   }
++
++  // Add support for stock Webform file component
++  $protect_webform = variable_get('clamav_enable_webform_file', FALSE);
++  if ($protect_webform && !empty($form['#node']) && 'webform' == $form['#node']->type) {
++    foreach (element_children($form['submitted']) as $field_name) {
++      $field = &$form['submitted'][$field_name];
++      if (isset($field['#type']) && 'managed_file' == $field['#type']) {
++        $field['#upload_validators']['clamav_file_widget_validate'] = array();
++      }
++    }
++  }
+ }
+ 
+ /**
