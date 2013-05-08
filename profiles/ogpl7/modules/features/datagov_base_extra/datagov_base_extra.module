@@ -80,85 +80,50 @@ function datagov_base_extra_modules_enabled($modules) {
     
 
   // add fusion grid configuration (does not provide exportables)
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'boxes__usaflag_info',
-      'skin' => '_additional',
-      'options' => 'a:1:{i:0;s:12:"usaflag-info";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'boxes__usaflag_info',
-      'skin' => 'fusion_apply_settings__block_group__datagov__groups__active_tab',
-      'options' => 'a:1:{i:0;s:64:"edit-fusion-apply-settings-block-group-datagov-groups-additional";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'boxes__usaflag_info',
-      'skin' => 'fusion_skins_grid12_width',
-      'options' => 'a:1:{i:0;s:8:"grid12-4";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'menu__menu-footer-menu',
-      'skin' => '_additional',
-      'options' => 'a:1:{i:0;s:11:"footer-menu";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'menu__menu-footer-menu',
-      'skin' => 'fusion_apply_settings__block_group__datagov__groups__active_tab',
-      'options' => 'a:1:{i:0;s:64:"edit-fusion-apply-settings-block-group-datagov-groups-additional";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'menu__menu-footer-menu',
-      'skin' => 'fusion_skins_block_positioning',
-      'options' => 'a:1:{i:0;s:13:"fusion-center";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'menu__menu-footer-menu',
-      'skin' => 'fusion_skins_content_alignment',
-      'options' => 'a:1:{i:0;s:12:"fusion-right";}',
-      'status' => '1'
-    ))
-    ->execute();
-  $result = db_insert('fusion_apply_skins')
-    ->fields(array(
-      'theme' => 'datagov',
-      'module' => 'block',
-      'element' => 'menu__menu-footer-menu',
-      'skin' => 'fusion_menu',
-      'options' => 'a:1:{i:0;s:18:"fusion-inline-menu";}',
-      'status' => '1'
-    ))
-    ->execute();
 
+  $filename = realpath(dirname(__FILE__)) . "/fusion_skins.inc";
+  $handle = fopen($filename, "r");
+  $contents = fread($handle, filesize($filename));
+
+  // validate skins
+  $skins = '';
+  ob_start();
+  eval($contents);
+  ob_end_clean();
+
+  foreach ($skins as $key => $skin) {
+    if (!is_array($skin)) {
+      watchdog('fusion import error', t('These are not valid skin configurations.'));
+      break;
+    }
+    $skins[$key] = (object) $skin;
+    if (!fusion_apply_skin_validate($skins[$key])) {
+      watchdog('fusion import error', t('These are not valid skin configurations.'));
+    }
+  }
+
+  // import skins
+  foreach ($skins as $skin) {
+    // Find existing skin configuration and grab its sid.
+    $params = array(
+      'theme' => $skin->theme,
+      'module' => $skin->module,
+      'element' => $skin->element,
+      'skin' => $skin->skin,
+    );
+    $sids = fusion_apply_skin_get_sids($params);
+    if (!empty($sids)) {
+      $skin->sid = reset($sids);
+    }
+
+    // Save skin configuration.
+    if (!fusion_apply_skin_save($skin)) {
+      watchdog('fusion import error', t('Not all skin configurations could be saved!'));
+    }
+  }
+
+
+
+  fclose($handle);
+  
 }

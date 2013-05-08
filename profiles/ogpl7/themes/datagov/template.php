@@ -28,7 +28,7 @@ function datagov_form_alter(&$form, &$form_state, $form_id) {
   $form['search_block_form']['#title'] = t('Search'); // Change the text on the label element
   $form['search_block_form']['#title_display'] = 'invisible'; // Toggle label visibilty
   $form['search_block_form']['#size'] = 40;  // define size of the textfield
-  $form['search_block_form']['#default_value'] = t('Search '); // Set a default value for the textfield
+  $form['search_block_form']['#default_value'] = t('Search ') . $placeholder; // Set a default value for the textfield
 
   // Add extra attributes to the text box
   $form['search_block_form']['#attributes']['onblur'] = "if (this.value == '') {this.value = 'Search " . $placeholder . ";}";
@@ -102,6 +102,8 @@ function datagov_preprocess(&$variables, $hook) {
       strpos($_GET['q'], 'search/') === 0
       ||
       strpos($_GET['q'], 'comment/') === 0
+      ||
+      preg_match('/node\/[0-9]+\/webform/', $_GET['q'])
       ) {
     $b_noredir = 1;
     return;
@@ -274,7 +276,9 @@ function datagov_preprocess_block(&$variables) {
 }
 
 function datagov_preprocess_views_view(&$vars) {
-    $view = $vars['view'];
+    global $user;
+    $res = array();
+    $view = &$vars['view'];
     $from = ($view->query->pager->current_page * $view->query->pager->options['items_per_page']) + 1;
     $to = $from + count($view->result) - 1;
     $total = $view->total_rows;
@@ -452,4 +456,34 @@ function datagov_preprocess_username(&$vars) {
 
     // Assign the altered name to $vars['name'].
     $vars['name'] = check_plain($name);
+}
+
+function datagov_form_views_exposed_form_alter(&$form, $form_state) {
+  //DG-1238: show only group options which the user is a member of
+  global $user;
+  $roles = $user->roles;
+  $is_superuser = in_array('Super User', $roles);
+  $is_content_admin = in_array('Content Administrator', $roles);
+  $res = array();
+  if(!($user->uid == 1 || $is_superuser || $is_content_admin)){  // if the user is not a Super User
+    $group_id = og_get_groups_by_user();
+    foreach($group_id as $val){
+      $result = db_query('SELECT gid, label FROM {og} WHERE gid = :id', array(':id' => $val));
+      foreach($result as $gid){
+        $res[$gid->gid] = $gid->label;
+      }
+    }
+
+    $form['gid']['#options'] = $res;
+  }
+
+  // sort out the multiselect options
+  foreach($form_state['view']->filter as $filter) {
+    if($form['#id'] != "views-exposed-form-daily-visitor-from-start-page-1" && $form['#id'] != "views-exposed-form-metrics-download-by-category-from-start-page-1" 
+	  && $form['#id'] != "views-exposed-form-top-10-visiting-countries-from-start-page-1" && $form['#id'] != "views-exposed-form-top-10-visiting-states-from-start-page-1"
+	  && $form['#id'] != "views-exposed-form-page-views-from-start-page-1" && $form['#id'] != "views-exposed-form-monthly-download-trends-from-start-page-1" 
+	  && $form['#id'] != "views-exposed-form-monthly-visitor-stats-from-start-page-1")
+		if($fid = $filter->options['expose']['identifier']) 
+			asort($form[$fid]['#options']);
+  }
 }

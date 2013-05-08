@@ -20,12 +20,12 @@
         $("#events-calendar").glDatePicker({
             showAlways: true,
             position: 'inherit',
+            selectedDate: new Date(),
             onChange: function(target, newDate) {
                 fetchEvents(target, newDate, true, ajaxUrl);
             }
         });
         // by default: highlight today and fetch today's events
-            $("#events-calendar").glDatePicker("setStartDate", new Date());
             fetchEvents($(".gldp-default-monyear"), today, true, ajaxUrl);
 
         $('body').delegate('.gldp-default-monyear', 'click', function(ev) { // TODO: convert to using .on() when using jQuery1.7+
@@ -131,8 +131,9 @@
                             var monthStartDate = new Date(parseInt(param.substr(0, 4)), parseInt(param.substr(4, 2), 10) - 1);
                             var monthStartTS = monthStartDate.getTime();
                             var endDate = new Date(endTS);
+                            startDate = new Date(Math.max(startTS, monthStartTS)); // start at event start or month start, whichever comes LAST
                             for (
-                                startDate = new Date(Math.max(startTS, monthStartTS)); // start at event start or month start, whichever comes LAST
+                                startDate.setHours(0, 0);
                                 (startDate.getMonth() == monthStartDate.getMonth()) && (startDate <= endDate); // keep going until event end or month end, whichever comes FIRST
                                 startDate.setDate(startDate.getDate() + 1)
                             ) { // loop from [start] to [end], or [start] to [end of month] - whichever comes soonest

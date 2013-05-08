@@ -9,6 +9,6 @@
 (function ($) {
 
     $(document).ready(function() {
-        $('.communities-home-left .view-community-featured-content .views-row .views-field-created').after('<span class="featured"><img src="/profiles/ogpl7/themes/datagov/images/featured-feed-star.png" alt="Featured Item" />FEATURED</span>');
+        $('.communities-home-left .view-community-featured-content .views-row .views-field-created').after('<span class="featured"><img src="/sites/all/themes/datagov/images/featured-feed-star.png" alt="Featured Item" />FEATURED</span>');
     });
 })(jQuery);

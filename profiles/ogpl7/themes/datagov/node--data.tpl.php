@@ -132,7 +132,12 @@ function print_link($x) {
 <h2 class="pane-title block-title"><?php print $title; ?></h2>
  <div class="detail">
 <a name="description"></a>
+
+
 <div class="detail-left">
+<?php
+if (strlen($datasetInfo->name) === 0 ) {// !is_ckan
+?>
 <div class="categories">
 <div class="detail-header"><h2>Dataset Summary</h2></div>
 <table border="0" cellpadding="0" cellspacing="0" class="details-table">
@@ -474,8 +479,127 @@ function print_link($x) {
     </tbody>
 </table>
 </div>
-<?php } ?>
+<?php
+//tools 
+} ?>
+<?php
+}
+else { // is_ckan
+?>
+<div class="categories">
+    <div class="detail-header"><h2>Dataset Summary</h2></div>
+    <table border="0" cellpadding="0" cellspacing="0" class="details-table">
+    <tbody>
+        <tr>
+            <td class="detailhead1 tablepad" valign="top">
+            <div class="pad-top">Description</div>
+            </td>
+            <td class="tablepad data">
+            <div class="pad-top"><?php echo $datasetInfo->notes;?></div>
+            </td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Resource Type</td>
+            <td class="tablepad data"><?php echo ucfirst($datasetInfo->extras->{"resource-type"}); ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Metadata Date</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"metadata-date"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Responsible Party</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"responsible-party"};?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Contact Email</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"contact-email"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">State</td>
+            <td class="tablepad data"><?php echo ucfirst($datasetInfo->{"state"}); ?></td>
+        </tr>
+
+        <tr>
+            <td class="detailhead1 tablepad">Access Constraints</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"access_constraints"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Bbox East Long</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"bbox-east-long"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Bbox North Lat</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"bbox-north-lat"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Bbox South Lat</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"bbox-south-lat"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Bbox West Long</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"bbox-west-long"}; ?></td>
+        </tr>
+
+        <tr>
+            <td class="detailhead1 tablepad">Coupled Resource</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"coupled-resource"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Reference Date(s)</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"dataset-reference-date"};?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Frequency Of Update</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"frequency-of-update"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Guid</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"guid"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Licence</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"licence"}; ?></td>
+        </tr>
+
+        <tr>
+            <td class="detailhead1 tablepad"> Metadata Language</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{" metadata-language"}; ?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Provider</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"provider"}; ?></td>
+        </tr>
+
+        <tr>
+            <td class="detailhead1 tablepad">Spatial</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"spatial"};?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Spatial Data Service Type</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"spatial-data-service-type"};?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Spatial Reference System</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"spatial-reference-system"};?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Temporal Coverage From</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"temporal_coverage-from"};?></td>
+        </tr>
+        <tr>
+            <td class="detailhead1 tablepad">Temporal Coverage To</td>
+            <td class="tablepad data"><?php echo $datasetInfo->extras->{"temporal_coverage-to"};?></td>
+        </tr>
+    </tbody>
+</table>
 </div>
+
+<?php
+}
+?>
+</div><!--detail-left-->
+
+
 <div class="sidepad">
 <div class="sidebar">
 <div class="detail-header"><h2>Download Information</h2></div>
@@ -671,7 +795,7 @@ document.write('<a href="javascript:viewer(\'<?php echo addslashes($raw_title); 
             </td>
             <td width="30%" class="catheader3">
                 <?php if($datasetInfo->data_extraction){?>
-                <a href="/download/<?php echo $dataset_id; ?>/data_extraction"><img
+                <a href="/download/<?php echo $dataset_id; ?>/dataextraction"><img
                 src="<?php print '/'.path_to_theme().'/images/icon-extraction.gif' ?>" alt="extraction documents" title="extraction documents"
                 width="21" height="21" /></a>
                 <?php } else { echo '&nbsp;';} ?>
@@ -691,7 +815,7 @@ document.write('<a href="javascript:viewer(\'<?php echo addslashes($raw_title); 
             </td>
             <td width="30%" class="catheader3">
                 <?php if($datasetInfo->rss){?>
-                <a href="/download/<?php echo $dataset_id; ?>/rss"><img
+                <a href="/download/<?php echo $dataset_id; ?>/feeds"><img
                 src="<?php print '/'.path_to_theme().'/images/icon-feed.gif' ?>" alt="Feed documents" title="Feed documents"
                 width="21" height="21" /></a>
                 <?php } else { echo '&nbsp;';} ?>
@@ -716,7 +840,8 @@ document.write('<a href="javascript:viewer(\'<?php echo addslashes($raw_title); 
                 </td>
         </tr>
     </tbody>
-    <?php } else { // Geodata ?>
+    <?php } else {
+    if (strlen($datasetInfo->name) === 0 ) {// !is_ckan and Geodata ?>
     <tbody>
         <tr>
             <td width="70%" class="catheader3"><!--[if lt IE 7]><a href="javascript:popupext()">Data Extraction<img src="<?php print '/'.path_to_theme().'/images/arrow-black.gif' ?>" alt="" width="7" height="7" /></a><![endif]-->
@@ -743,7 +868,30 @@ document.write('<a href="javascript:viewer(\'<?php echo addslashes($raw_title); 
                 </td>
         </tr>
     </tbody>
-    <?php } ?>
+    <?php } else { ?>
+    <tbody>
+    <tr>
+        <td width="70%" class="catheader3"><!--[if lt IE 7]><a href="javascript:popupext()">Data Extraction<img src="<?php print '/'.path_to_theme().'/images/arrow-black.gif' ?>" alt="" width="7" height="7" /></a><![endif]-->
+            <div id="row1">
+                <div id="popupdet">
+                    <p><a href="#">Geodata<img src="<?php print '/'.path_to_theme().'/images/arrow-black.gif' ?>"
+                                               alt="" width="7" height="7" /><span><img
+                        src="<?php print '/'.path_to_theme().'/images/popup-extraction.gif' ?>"
+                        alt="Allows you to select a databasket full of variables and then recode those variables in a form that the user desires. The user can then develop and customize tables. Selecting the results in a table driven by customer requirements for one-time or continued reuse."
+                        width="176" height="179" /></span></a></p>
+                </div>
+            </div>
+        </td>
+        <td width="30%" class="catheader3">
+
+            <a href="<?php echo variable_get('ckan_data_access_point', 'http://geo.gov.ckan.org/')?>dataset/<?php echo $datasetInfo->id; ?>"><img
+                src="<?php print '/'.path_to_theme().'/images/icon-geo.png' ?>" alt="Geo-enabled data" title="geodata"
+                width="21" height="21" /></a>
+        </td>
+    </tr>
+    </tbody>
+    <?php }
+    }?>
 </table>
 &nbsp;<br />
 <div class="commentbox">

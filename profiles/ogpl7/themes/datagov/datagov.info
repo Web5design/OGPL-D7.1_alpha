@@ -15,6 +15,7 @@ scripts[] = js/datagov_script.js
 scripts[] = js/communities-superfish.js
 scripts[] = js/communities-new-feed-item.js
 scripts[] = js/jquery.cycle.all.js
+scripts[] = js/blog-fix-add-new-comment-url.js
 ; --------------------------------------------------------------------------------
 ; This provides support for the Fusion Accelerator suite.  
 ; See http://www.drupal.org/project/fusion_accelerator for more information.

@@ -160,7 +160,7 @@
 	background-color:#fff;
 	border: solid 1px #F1F3F5;
 	color:#ddd;
-	cursor:wait;
+	cursor:default;
 }
 .gldp-default-noday .noday {
     color: #ccc;

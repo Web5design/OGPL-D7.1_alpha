@@ -33,5 +33,10 @@
                 });
             }
         });
+
+        // PRA text on 'Contact Us' page
+        $('.pra-text-toggle').click(function() {
+            $('.pra-text-toggle').toggle();
+        });
     });
 })(jQuery);

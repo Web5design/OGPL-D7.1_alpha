@@ -1028,7 +1028,7 @@ ul.pager li.pager-current {
 
 ul.pager li.pager-current {
   background-color: #777;
-  color: #fff;
+  color: #fff !important;
 }
 
 ul.pager a:hover,
@@ -1036,7 +1036,7 @@ ul.pager a:active,
 ul.pager a:focus {
   background-color: #777;
   border-color: #333;
-  color: #fff;
+  color: #fff !important;
 }
 
 /* Forms
@@ -1254,13 +1254,25 @@ div.poll div.bar div.foreground {
 /* METRICS Data.gov Federal Agency Participation Table
 /-------------------------------------------------------------- */
 
-div.view-federal-agency-participation span.hival {
+div.view-federal-agency-participation span.hival,
+div.pane-new-metric-table-metric-table-federal-pane span.hival,
+div.pane-new-metric-table-metric-table-other-pane span.hival,
+div.pane-new-metric-table-metric-table-summary-pane span.hival
+{
     color:#af3a39;
 }
-div.view-federal-agency-participation span.main {
+div.view-federal-agency-participation span.main,
+div.pane-new-metric-table-metric-table-federal-pane span.main,
+div.pane-new-metric-table-metric-table-other-pane span.main,
+div.pane-new-metric-table-metric-table-summary-pane span.main
+{
     font-weight:bold;
 }
-div.view-federal-agency-participation span.sub {
+div.view-federal-agency-participation span.sub,
+div.pane-new-metric-table-metric-table-federal-pane span.sub,
+div.pane-new-metric-table-metric-table-other-pane span.sub,
+div.pane-new-metric-table-metric-table-summary-pane span.sub
+{
     padding-left:20px;
 }
 
@@ -1500,7 +1512,7 @@ div.usasearch-results-wrap div.search-notice {
 }
 .communities-home-center {
     width: 100%;
-    background: url("/profiles/ogpl7/themes/datagov/images/community-hub-featured-texture.png");
+    background: url("/sites/all/themes/datagov/images/community-hub-featured-texture.png");
 }
     .communities-home-center .toggle-wrapper.lowered-toggle { top: -140px; }
     .communities-home-center .toggle-wrapper {
@@ -1618,7 +1630,7 @@ div.usasearch-results-wrap div.search-notice {
     .communities-home-center .events-list-view {
         float: right;
         width: 550px;
-        height: 315px;
+        height: 361px;
         background-color: #fff;
         border: 1px #e5eaee solid;
         overflow-y: scroll;
@@ -1648,6 +1660,7 @@ div.usasearch-results-wrap div.search-notice {
         .communities-home-center .view-community-events .views-row { margin-bottom: 20px; }
             .communities-home-center .events-list-view .no-events,
             .communities-home-center .view-community-events .views-field-field-date,
+            .communities-home-center .view-community-events .views-field-field-timezone,
             .communities-home-center .view-community-events .field-content a,
             .communities-home-center .view-community-events .field-content a:visited,
             .communities-home-center .view-community-events .field-content a:hover,
@@ -1659,6 +1672,7 @@ div.usasearch-results-wrap div.search-notice {
                 font-weight: bold;
             }
             .communities-home-center .view-community-events .past-event .views-field-field-date,
+            .communities-home-center .view-community-events .past-event .views-field-field-timezone,
             .communities-home-center .view-community-events .past-event .views-field-title .field-content a,
             .communities-home-center .view-community-events .past-event .views-field-title .field-content a:visited,
             .communities-home-center .view-community-events .past-event .views-field-title .field-content a:hover,
@@ -1829,7 +1843,7 @@ div.usasearch-results-wrap div.search-notice {
 body.datagov-community .grid12-4 { width:400px; }
 body.datagov-community #logo { margin: 0; }
 body.datagov-community #header-group .logo .content, body.datagov-community #logo img { float:left; }
-body.datagov-community #header-group .community-label { display: block; float: left;margin-top:5px; }
+body.datagov-community #header-group .community-label { display: block; float: left; }
 body.datagov-community #header-group .community-label span { display: block; float: left; padding:0 10px; margin:17px 0 0 0; color:#999; background-color: transparent; font:bold 20px Trajan,Georgia,"Times New Roman",Serif; height:24px; line-height:24px;  }
 body.datagov-community #header-group .community-label h1.community-name { display: block; float: left; margin:15px 0px 0px 0px; padding:0px; color:#666; /* background:transparent url("../images/separator.png") no-repeat 0px 5px; */ background-color: transparent; font:normal 24px Trajan,Georgia,"Times New Roman",Serif; height:40px; line-height:28px;  }
 body.datagov-community #header-group .community-label h1.community-name a { text-decoration: none; color: #5881B0;  }
@@ -2012,7 +2026,6 @@ body.datagov-community #row1 {  position:relative;  z-index:50; }
 body.datagov-community #row2 {  position:relative;  z-index:49; }
 body.datagov-community #row3 {  position:relative;  z-index:48; }
 body.datagov-community #row4 {  position:relative;  z-index:47; }
-body.datagov-community .row-gray { display: none; }
 body.datagov-community .separator-mini-700 { background:transparent url("../images/separator-600.gif") no-repeat center center ; height: 40px; width: 700px; margin: 0 auto; }
 body.datagov-community h2.title {
     display:block;
@@ -2380,14 +2393,14 @@ div.plus1-widget .plus1-score { color: #003366; }
 ul.clist1 li{
     float:none !important;
 }
-ul.clist1 li.col_1{clear:left; margin-top:-245px !important;}
+ul.clist1 li.col_1{clear:left; margin-top:-279px !important;}
 .main-menu-inner ul.sf-menu ul {
     width: auto !important;
 }
 #menu-1568-1 ul {
     padding:0 !important;
     left:-175px !important;
-    min-height: 250px;
+    min-height: 280px;
 
     background:#366C9F;
     border-radius: 0;
@@ -2455,7 +2468,7 @@ padding:0;
 .view-community-blog .views-result-count{
 text-align: center;
 }
-#menu-971-1 ul li{width:14.7em !important;}
+#menu-971-1 ul li{width:19.5em !important;}
 
 #menu-669-1 ul {left:15em !important;}
 #menu-733-1 ul {left:15em !important;}
@@ -2694,60 +2707,59 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     font-weight: normal;
 }
 
-.block-addthis {
-    border-left: 1px solid #506D8F;
+body.datagov-community-businessusa .forum-detail .more-link {
     display: block;
-    height: 18px !important;
-    margin: 0 !important;
-    padding: 2px 0 0 !important;
-    width: 100px !important;
-    float: right;
-}
-#block-boxes-current_date_preheader {
-    border-left: 1px solid #506D8F;
-    color: #FFFFFF !important;
-    display: block;
-    height: 20px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    text-align: center;
-    width: 169px;
-    float: right;
 }
 
-#block-boxes-current_date_preheader p{margin-top:0;}
-
- #block-blockify-blockify-logo {
-    float: left;
-    margin-bottom: 0;
-    width: 650px;
-}
-#block-blockify-blockify-logo .content{width:195px;}
-#block-blockify-blockify-logo .content, #block-blockify-blockify-logo .community-label{float:left;}
-#block-system-user-menu {
-    clear: right;
-    float: right;
-    font-weight: bold;
-    margin-bottom: 0;
-    width: 330px;
-}
-#block-search-form {
-    clear: left;
-    float: right;
-    margin-bottom: 0px;
-    margin-top: -35px;
-    width: 350px;
-}
-
-.communities-hub {
-  float: left;
-  margin: 0;
-  width: 100%!important;
-}
-#pid-communities .main h1.gutter {
+.forum-detail .more-link {
     display: none;
 }
-#search-block-form .container-inline{width:335px;}
+.view-id-recent_stories .recent_image{
+    width:220px;
+    float:left;
+}
+.view-id-recent_stories .views-field-title{margin: 15px 0; clear:both;}
+.view-id-recent_stories .views-field-title a{font-size: 15px !important;}
+.datagov-community-developer-story .field-type-image .field-item{width:510px; margin:0 auto;}
+
+.view-id-recent_stories .views-row{clear:both;min-height: 170px;}
+.pager .first a:hover{color:#ffffff !important;}
+.pager .last a:hover{color:#ffffff !important;}
+
+.datagov-community-energy .view-clone-of-advanced-forum-active-topics .view-header h2{color:#4B712D;}
+.datagov-community-developer-story .meta{display:none;}
+
+.view-community-export .views-exposed-widget { padding: 5px; }
+.view-community-export .views-exposed-widget .views-widget { line-height: 30px; }
+.view-community-export .views-table th {
+    background-color: #eee;
+    color: #486A97;
+}
+
+.agenda th {
+    background-color: #CCCCCC;
+    color: #444444;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    padding-top: 5px;
+}
+.agenda th, .agenda td {
+    border: 1px solid #666666;
+}
+body.datagov-community.datagov-community-energy-page h2{color:#4B712D;}
+body.datagov-community.datagov-community-energy-page #block-system-main h2.pane-title {color:#4B712D}
+#cboxClose {border:1px dotted #666666;}
+
+.views-table th a,
+.views-table th a:hover,
+.views-table th a:visited,
+.views-table th a:active { color: #fff; }
+
+.view-agency-datasets-list .views-field.views-field-title { width: 325px; }
+.views-view-grid.cols-2 tr td { text-align: left;
+    padding:10px 25px;
+    vertical-align: top;
+    width: 45%;}
 
 #open-data-sites-boxes.agencies {
     height: auto;
@@ -2773,4 +2785,160 @@ body.datagov-community #block-system-main .forum-detail .sidebar a {
     line-height: 30px;
     margin-top: 0;
     font-weight: bold;
+}
+#pid-metric #main-wrapper .node-bottom.region.nested { margin: 0; }
+#pid-metric #main-wrapper .clear { height: 0; }
+#boxes-box-home_open_government .twitter-follow-us { width: 50px; }
+
+.pra-text-toggle { cursor: pointer; }
+.pra-text-toggle .headline { font-weight: bold; }
+#pid-page-ocean-map-national .pane-map-gallery h2.pane-title{
+    color:#284A78!important;
+    margin-left:25px!important;font: bold 16px Georgia,"Times New Roman",Serif !important;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0)
+{
+    #menu-733-1 ul{left:15.4em !important;}
+}
+
+
+#menu-669-1 ul li{width:255px !important;float:none !important;}
+
+
+body.datagov-community #block-system-main .views-exposed-form .views-exposed-widget .form-item input#edit-keys {
+    width: auto;
+}
+body.datagov-community #block-system-main .views-exposed-form .views-exposed-widget .form-item select#edit-field-categorization-value {
+    width: auto;
+}
+.ie7 .search-block-form{margin-bottom:10px;}
+.ie7 #menu-981-1 ul li{width:12em !important;}
+.ie7 #menu-615-1 ul li{width:10.5em !important;}
+.ie7 #menu-527-1 ul li#menu-669-1{width:190px !important;}
+.ie7 #menu-527-1 ul li#menu-733-1{width:190px !important;}
+.ie7 .datagov-community #block-system-main .views-exposed-form .views-exposed-widget {
+
+    padding-right: 0px !important;
+}
+#pid-page-ocean-map-regional .pane-map-gallery h2.pane-title {
+    color: #284A78 !important;
+    font: bold 16px Georgia,"Times New Roman",Serif !important;
+    margin-left: 25px !important;
+}
+#pid-page-ocean-map-national .pane-map-gallery h2.pane-title{
+    color:#284A78!important;
+    margin-left:25px!important;font: bold 16px Georgia,"Times New Roman",Serif !important;
+}
+
+body#pid-blogs #block-system-main .view-data-gov-blog .views-row .node-readmore.first a {
+    background: url("../images/search-bg.png") no-repeat scroll center center transparent;
+    color: #FFFFFF;
+    font-size: 14px;
+    padding: 10px 15px;
+}
+
+body#pid-blogs #block-system-main .view-data-gov-blog .views-row .node-readmore.first {
+    float: right;
+}
+body#pid-blogs #block-system-main .view-data-gov-blog .views-row .comment-bubble-container{
+    background: url("../images/comment-bubble-right.gif") no-repeat scroll right bottom transparent;
+    float: left;
+    height: 21px;
+    line-height: 21px;
+    margin-right: 5px;
+    padding-bottom: 5px;
+    padding-right: 6px;
+    text-align: center;
+}
+body#pid-blogs #block-system-main .view-data-gov-blog .views-row .comment-bubble-container a {
+    background: url("../images/comment-bubble-left.gif") no-repeat scroll left top #D48233;
+    color: #FFFFFF;
+    display: block;
+    line-height: 21px;
+    min-width: 24px;
+    padding-left: 6px;
+}
+body#pid-blogs #block-system-main .view-data-gov-blog .views-row {
+    background: url("../images/separator-600.gif") no-repeat scroll center top transparent;
+    margin-bottom: 20px;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+#ecoinforma-geodata-container {
+    height: 800px;
+    margin: 0 -10px;
+    width: 1000px;
+}
+#ecoinforma-geodata-container #outerdiv {
+    height: 800px;
+    overflow: hidden;
+    position: relative;
+    width: 1030px;
+}
+#ecoinforma-geodata-container #innerdiv {
+    height: 866px;
+    left: -13px;
+    position: absolute;
+    top: -61px;
+    width: 1028px;
+}
+input[id="hpFrmSearch:btnDoSearch"] {
+    background: url("http://geo.data.gov/geoportal/catalog/skins/themes/datagov/images/search-bg.png") no-repeat scroll right top transparent;
+    border: 0 none;
+    color: #FFFFFF !important;
+    font-size: 1em;
+    font-weight: bold;
+    height: 30px;
+    margin: 3px 3px 3px 250px;
+    padding: 0 3px 3px;
+    position: absolute;
+    text-align: center;
+    text-decoration: none !important;
+    width: 98px;
+}
+input[id="hpFrmSearch:itxFilterKeywordText"] {
+    border-color: #666666;
+    border-radius: 12px 12px 12px 12px;
+    border-style: solid;
+    border-width: 1px;
+    height: 20px;
+    margin-top: 3px;
+    padding: 3px;
+    position: absolute;
+    width: 240px;
+}
+.geo-data-search { width: 100px; }
+
+.page-metric-visitorstats .views-exposed-widget.views-widget-filter-calculated_year {
+    width: 120px;
+}
+.page-metric-visitorstats #edit-calculated-year-wrapper > label {
+    float: left;
+    width: 40px;
+}
+.page-metric-visitorstats .views-exposed-widget.views-submit-button {
+    padding-top: 4px;
+}
+.page-metric-visitorstats #edit-submit-page-views-from-start{margin-top:0;}
+.page-metric-visitorstats #edit-submit-monthly-download-trends-from-start{margin-top: 0;}
+
+.page-metric-visitorstats .views-exposed-widget.views-submit-button input{
+    margin-top: 0px;
+}
+.page-metric-visitorstats .views-exposed-widget.views-widget-filter-calculated_month {
+    width: 110px;
+}
+.page-metric-visitorstats #edit-calculated-month-wrapper > label {
+    float: left;
+    width: 50px;
+}
+#pid-metric-visitorstats-monthvisitorstats .views-exposed-widget.views-widget-filter-calculated_year {
+    width: 170px;
+}
+#pid-metric-visitorstats-monthlyredirecttrend .views-exposed-widget.views-widget-filter-calculated_year {
+    width: 170px;
+}
+#pid-metric-visitorstats-monthlyviewstrend .views-exposed-widget.views-widget-filter-calculated_year {
+    width: 170px;
 }

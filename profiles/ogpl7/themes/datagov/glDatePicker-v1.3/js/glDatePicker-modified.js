@@ -211,7 +211,7 @@
 
 			// Render the cells as <TD>
 			var days = "";
-			for(var y = 0, i = 0; y < 5; y++)
+			for(var y = 0, i = 0; y < 6; y++)
 			{
 				var row = "";
 
@@ -220,6 +220,7 @@
 					var p = ((prevDateLastDay - firstDate.getDay()) + i + 1);
 					var n = p - prevDateLastDay;
 					var c = (x == 0) ? "sun" : ((x == 6) ? "sat" : "day");
+                    var c2 = '';
 
 					// If value is outside of bounds its likely previous and next months
 					if(n >= 1 && n <= lastDay)
@@ -246,7 +247,7 @@
 						// Test against selected date
 						if(settings.selectedDate != -1)
 						{
-							c = (dateTime == selectedTime) ? "selected":c;
+							c2 = (dateTime == selectedTime) ? "selected": '';
 						}
 					}
 					else
@@ -256,7 +257,11 @@
 					}
 
 					// Create the cell
-					row += "<td class='gldp-days "+c+" **-"+c+"'><div class='"+c+"'>"+n+"</div></td>";
+                    if (!c2) {
+                        row += "<td class='gldp-days "+c+" **-"+c+"'><div class='"+c+"'>"+n+"</div></td>";
+                    } else {
+                        row += "<td class='gldp-days "+c+" **-"+c+" "+c2+" **-"+c2+"'><div class='"+c+" "+c2+"'>"+n+"</div></td>";
+                    }
 				}
 
 				// Create the row
@@ -331,7 +336,7 @@
 			});
 
 			// Highlight day cell on hover
-			$("tr.days td:not(.noday, .selected)", calendar)
+			$("tr.days td:not(.noday)", calendar)
 				.mouseenter(function(e)
 				{
 					var css = "gldp-"+settings.cssName+"-"+$(this).children("div").attr("class");

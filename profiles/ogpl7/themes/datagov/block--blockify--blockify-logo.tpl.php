@@ -49,7 +49,7 @@
     <?php print render($title_suffix); ?>
 
     <div class="content clearfix"<?php print $content_attributes; ?>>
-      <?php print $content ?>
+      <a href="<?php print base_path();?>" id="logo" rel="home" title="Return to the Data.gov home page"><img src="<?php print base_path();?>sites/all/themes/datagov/logo.png" alt="Data.gov logo" /></a>
     </div>
     <?php print $community_label ?>
   </div><!-- /block-inner -->
