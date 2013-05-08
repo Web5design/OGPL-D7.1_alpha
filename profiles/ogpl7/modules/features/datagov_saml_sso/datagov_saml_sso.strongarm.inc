@@ -13,6 +13,20 @@ function datagov_saml_sso_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'display_name_saml';
+  $strongarm->value = 'field_display_name';
+  $export['display_name_saml'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'hide_display_name_text_field';
+  $strongarm->value = 1;
+  $export['hide_display_name_text_field'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'hide_drupal_login_form';
   $strongarm->value = 0;
   $export['hide_drupal_login_form'] = $strongarm;
@@ -76,9 +90,23 @@ function datagov_saml_sso_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
+  $strongarm->name = 'simplesamlphp_auth_authsource';
+  $strongarm->value = 'ogpl-sp';
+  $export['simplesamlphp_auth_authsource'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
   $strongarm->name = 'simplesamlphp_auth_forcehttps';
   $strongarm->value = 1;
   $export['simplesamlphp_auth_forcehttps'] = $strongarm;
+
+  $strongarm = new stdClass();
+  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
+  $strongarm->api_version = 1;
+  $strongarm->name = 'simplesamlphp_auth_installdir';
+  $strongarm->value = '/var/simplesamlphp-idp';
+  $export['simplesamlphp_auth_installdir'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
