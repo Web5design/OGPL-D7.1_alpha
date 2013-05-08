@@ -538,9 +538,7 @@ function datagov_community_views_default_views() {
     'blog' => 'blog',
     'challenge' => 'challenge',
     'data' => 'data',
-    'event' => 'event',
     'forum' => 'forum',
-    'tool' => 'tool',
   );
   /* Filter criterion: Content: Sticky */
   $handler->display->display_options['filters']['sticky']['id'] = 'sticky';
