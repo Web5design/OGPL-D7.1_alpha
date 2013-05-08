@@ -112,7 +112,7 @@ function ogpl7_install_finished(&$install_state) {
 
   // add #openid-login to user/login link path
   db_update('menu_links')
-    ->fields(array('options' => 'a:3:{s:5:"alter";b:1;s:8:"fragment";s:12:"openid-login";s:10:"attributes";a:1:{s:5:"title";s:0:"";}}'))
+    ->fields(array('options' => 'a:3:{s:5:"alter";b:1;s:8:"fragment";s:12:"openid-login";s:10:"attributes";a:1:{s:5:"title";s:0:"";}}', 'weight' => '-50'))
     ->condition('link_title', 'Open ID Login')
     ->execute();
 
